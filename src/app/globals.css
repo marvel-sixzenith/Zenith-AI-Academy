@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0f;
+  --background-secondary: #111118;
+  --background-card: rgba(30, 41, 59, 0.5);
+
+  --foreground: #f8fafc;
+
+  --primary: #3b82f6;
+  --primary-light: #60a5fa;
+  --primary-dark: #1d4ed8;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+
+  --border-color: rgba(59, 130, 246, 0.2);
+}
+
+body {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0a0a0f 50%, #1a1a2e 100%);
+  background-attachment: fixed;
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+@layer components {
+
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-[var(--background-card)] backdrop-blur-xl border border-[var(--border-color)] rounded-2xl transition-all duration-300;
+  }
+
+  .glass-card:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply bg-gradient-to-br from-blue-500 to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-white border border-[var(--border-color)] font-semibold px-6 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:bg-blue-500/10 hover:border-blue-500/40;
+  }
+
+  /* Form inputs */
+  .input-field {
+    @apply w-full bg-[var(--background-secondary)] border border-[var(--border-color)] rounded-xl px-4 py-3 text-white transition-all duration-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder-slate-500;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-2 bg-[var(--background-secondary)] rounded-full overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-full transition-all duration-500;
+  }
+
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-success {
+    @apply bg-green-500/15 text-green-500;
+  }
+
+  .badge-warning {
+    @apply bg-amber-500/15 text-amber-500;
+  }
+
+  .badge-primary {
+    @apply bg-blue-500/15 text-blue-400;
+  }
+
+  /* Text Gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-blue-400 to-blue-600;
+  }
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
