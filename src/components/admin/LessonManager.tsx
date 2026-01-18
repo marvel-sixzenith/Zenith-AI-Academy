@@ -270,26 +270,34 @@ export default function LessonManager() {
                             </select>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Content Data (JSON or URL)</label>
-                            <textarea
-                                value={formData.contentData}
-                                onChange={(e) => setFormData({ ...formData, contentData: e.target.value })}
-                                className="input-field font-mono text-sm"
-                                rows={6}
-                                placeholder={`VIDEO: Just paste YouTube URL or use JSON:
-{"type": "video", "youtube_url": "https://youtube.com/watch?v=xxx"}
+                        {/* Content Editors */}
+                        <div className="border border-[var(--border-color)] rounded-lg p-4 bg-[var(--background-secondary)]/30">
+                            <label className="block text-sm font-medium mb-4">Content Configuration</label>
 
-PDF: Just paste file URL or use JSON:
-{"type": "pdf", "file_url": "https://example.com/file.pdf"}
-
-QUIZ: {"type": "quiz", "questions": [...], "passing_score": 70}
-
-ASSIGNMENT: {"type": "assignment", "description": "...", "checklist": [...]}`}
-                            />
-                            <p className="text-xs text-[var(--text-muted)] mt-1">
-                                For VIDEO/PDF: Enter just the URL (auto-formatted) or full JSON. For QUIZ/ASSIGNMENT: Enter complete JSON object.
-                            </p>
+                            {formData.contentType === 'VIDEO' && (
+                                <VideoEditor
+                                    value={formData.contentData}
+                                    onChange={(val) => setFormData({ ...formData, contentData: val })}
+                                />
+                            )}
+                            {formData.contentType === 'PDF' && (
+                                <PdfEditor
+                                    value={formData.contentData}
+                                    onChange={(val) => setFormData({ ...formData, contentData: val })}
+                                />
+                            )}
+                            {formData.contentType === 'QUIZ' && (
+                                <QuizEditor
+                                    value={formData.contentData}
+                                    onChange={(val) => setFormData({ ...formData, contentData: val })}
+                                />
+                            )}
+                            {formData.contentType === 'ASSIGNMENT' && (
+                                <AssignmentEditor
+                                    value={formData.contentData}
+                                    onChange={(val) => setFormData({ ...formData, contentData: val })}
+                                />
+                            )}
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
