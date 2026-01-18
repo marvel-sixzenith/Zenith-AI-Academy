@@ -23,6 +23,7 @@ export default function ModuleManager() {
     const [isLoading, setIsLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingModule, setEditingModule] = useState<Module | null>(null);
+    const [selectedTrackFilter, setSelectedTrackFilter] = useState<string>('all');
     const [formData, setFormData] = useState({
         trackId: '',
         name: '',
@@ -58,6 +59,8 @@ export default function ModuleManager() {
                     track: { id: track.track.id, name: track.track.name }
                 }))
             );
+            // Sort by orderIndex
+            allModules.sort((a: Module, b: Module) => a.orderIndex - b.orderIndex);
             setModules(allModules);
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -70,18 +73,30 @@ export default function ModuleManager() {
         e.preventDefault();
 
         try {
+            // Auto-calculate order index for new modules if not specified
+            let orderIndex = formData.orderIndex;
+            if (!editingModule && orderIndex === 0) {
+                const trackModules = modules.filter(m => m.trackId === formData.trackId);
+                orderIndex = trackModules.length; // Place at end
+            }
+
             const url = editingModule ? `/api/admin/modules/${editingModule.id}` : '/api/admin/modules';
             const method = editingModule ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    orderIndex
+                }),
             });
 
             if (response.ok) {
                 fetchData();
                 resetForm();
+            } else {
+                alert('Failed to save module');
             }
         } catch (error) {
             console.error('Failed to save module:', error);
@@ -113,19 +128,48 @@ export default function ModuleManager() {
     const resetForm = () => {
         setShowForm(false);
         setEditingModule(null);
-        setFormData({ trackId: '', name: '', description: '', orderIndex: 0 });
+        setFormData({
+            trackId: selectedTrackFilter !== 'all' ? selectedTrackFilter : '', // Pre-select if filtered
+            name: '',
+            description: '',
+            orderIndex: 0
+        });
     };
+
+    // Filter modules based on selection
+    const filteredModules = selectedTrackFilter === 'all'
+        ? modules
+        : modules.filter(m => m.trackId === selectedTrackFilter);
 
     if (isLoading) return <div>Loading modules...</div>;
 
     return (
         <div className="space-y-6">
-            {!showForm && (
-                <button onClick={() => setShowForm(true)} className="btn-primary">
-                    <Plus className="w-5 h-5" />
-                    Add New Module
-                </button>
-            )}
+            <div className="flex flex-wrap items-center gap-4">
+                {!showForm && (
+                    <button onClick={() => setShowForm(true)} className="btn-primary">
+                        <Plus className="w-5 h-5" />
+                        Add New Module
+                    </button>
+                )}
+
+                {/* Track Filter */}
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-[var(--text-muted)]">Filter by track:</span>
+                    <select
+                        value={selectedTrackFilter}
+                        onChange={(e) => setSelectedTrackFilter(e.target.value)}
+                        className="input-field text-sm py-2"
+                    >
+                        <option value="all">All Tracks</option>
+                        {tracks.map((track) => (
+                            <option key={track.id} value={track.id}>
+                                {track.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
 
             {showForm && (
                 <div className="glass-card p-6">
@@ -133,33 +177,35 @@ export default function ModuleManager() {
                         {editingModule ? 'Edit Module' : 'Create New Module'}
                     </h3>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Track *</label>
-                            <select
-                                required
-                                value={formData.trackId}
-                                onChange={(e) => setFormData({ ...formData, trackId: e.target.value })}
-                                className="input-field"
-                            >
-                                <option value="">Select a track</option>
-                                {tracks.map((track) => (
-                                    <option key={track.id} value={track.id}>
-                                        {track.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Track *</label>
+                                <select
+                                    required
+                                    value={formData.trackId}
+                                    onChange={(e) => setFormData({ ...formData, trackId: e.target.value })}
+                                    className="input-field w-full"
+                                >
+                                    <option value="">Select a track</option>
+                                    {tracks.map((track) => (
+                                        <option key={track.id} value={track.id}>
+                                            {track.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Module Name *</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="input-field"
-                                placeholder="e.g., Foundations of Automation"
-                            />
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Module Name *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="input-field w-full"
+                                    placeholder="e.g., Foundations of Automation"
+                                />
+                            </div>
                         </div>
 
                         <div>
@@ -167,7 +213,7 @@ export default function ModuleManager() {
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="input-field"
+                                className="input-field w-full"
                                 rows={2}
                             />
                         </div>
@@ -176,10 +222,15 @@ export default function ModuleManager() {
                             <label className="block text-sm font-medium mb-2">Order</label>
                             <input
                                 type="number"
+                                min="0"
                                 value={formData.orderIndex}
-                                onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) })}
-                                className="input-field"
+                                onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) || 0 })}
+                                className="input-field w-full"
+                                placeholder="0"
                             />
+                            <p className="text-xs text-[var(--text-muted)] mt-1">
+                                Lower = appears first in track
+                            </p>
                         </div>
 
                         <div className="flex gap-3">
@@ -197,15 +248,22 @@ export default function ModuleManager() {
             )}
 
             <div className="glass-card divide-y divide-[var(--border-color)]">
-                {modules.length === 0 ? (
+                {filteredModules.length === 0 ? (
                     <div className="p-8 text-center text-[var(--text-muted)]">
-                        No modules yet. Create tracks first, then add modules!
+                        {selectedTrackFilter === 'all'
+                            ? 'No modules yet. Create tracks first, then add modules!'
+                            : 'No modules in this track yet.'}
                     </div>
                 ) : (
-                    modules.map((module) => (
+                    filteredModules.map((module) => (
                         <div key={module.id} className="p-4 flex items-center justify-between">
                             <div>
-                                <h4 className="font-bold">{module.name}</h4>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-[var(--text-muted)] font-mono bg-[var(--background-secondary)] px-1.5 py-0.5 rounded">
+                                        #{module.orderIndex + 1}
+                                    </span>
+                                    <h4 className="font-bold">{module.name}</h4>
+                                </div>
                                 <p className="text-sm text-[var(--text-muted)]">
                                     Track: {module.track?.name || 'Unknown'}
                                 </p>

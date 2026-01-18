@@ -16,7 +16,7 @@ export async function PUT(
 
         const { id } = await params;
         const body = await request.json();
-        const { name, description, orderIndex } = body;
+        const { name, description, orderIndex, trackId } = body;
 
         const existing = await prisma.module.findUnique({
             where: { id },
@@ -32,6 +32,7 @@ export async function PUT(
                 name: name || existing.name,
                 description: description !== undefined ? description : existing.description,
                 orderIndex: orderIndex !== undefined ? orderIndex : existing.orderIndex,
+                trackId: trackId || existing.trackId,
             },
         });
 

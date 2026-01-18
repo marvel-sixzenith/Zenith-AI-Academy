@@ -59,7 +59,7 @@ export async function PUT(
 
         const { id } = await params;
         const body = await request.json();
-        const { title, contentType, contentData, pointsValue, orderIndex, status } = body;
+        const { title, contentType, contentData, pointsValue, orderIndex, status, moduleId } = body;
 
         const existing = await prisma.lesson.findUnique({
             where: { id },
@@ -94,6 +94,7 @@ export async function PUT(
                 pointsValue: pointsValue !== undefined ? pointsValue : existing.pointsValue,
                 orderIndex: orderIndex !== undefined ? orderIndex : existing.orderIndex,
                 status: status || existing.status,
+                moduleId: moduleId || existing.moduleId,
             },
         });
 
