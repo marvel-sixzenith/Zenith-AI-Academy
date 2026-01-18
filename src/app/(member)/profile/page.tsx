@@ -1,6 +1,7 @@
 
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { AvatarUpload } from '@/components/user/AvatarUpload';
 import { User, Mail, Calendar, Trophy, BookOpen, Clock } from 'lucide-react';
 import { redirect } from 'next/navigation';
 
@@ -37,10 +38,8 @@ export default async function ProfilePage() {
                 {/* Profile Card */}
                 <div className="md:col-span-1 border border-[var(--border-color)] bg-[var(--background-card)] rounded-2xl p-6 h-fit">
                     <div className="flex flex-col items-center text-center">
-                        <div className="w-24 h-24 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] text-3xl font-bold mb-4">
-                            {user.name?.charAt(0).toUpperCase()}
-                        </div>
-                        <h2 className="text-xl font-bold">{user.name}</h2>
+                        <AvatarUpload currentImage={user.image} userName={user.name} />
+                        <h2 className="text-xl font-bold mt-4">{user.name}</h2>
                         <p className="text-[var(--text-secondary)] text-sm mb-4">{user.email}</p>
 
                         <div className="w-full pt-4 border-t border-[var(--border-color)] flex flex-col gap-3">

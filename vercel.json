@@ -1,5 +1,8 @@
 {
     "buildCommand": "prisma generate && npm run build",
+    "regions": [
+        "bom1"
+    ],
     "env": {
         "SKIP_ENV_VALIDATION": "1"
     }
