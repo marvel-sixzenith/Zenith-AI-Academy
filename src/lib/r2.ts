@@ -1,10 +1,10 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'zenith-assets';
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
 if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
     // Warn but don't crash, as this might run during build time where env vars aren't needed yet
@@ -43,12 +43,42 @@ export async function uploadFile(
 
     try {
         await s3Client.send(command);
-        // Return the public URL
-        const publicUrl = R2_PUBLIC_URL?.endsWith('/') ? R2_PUBLIC_URL.slice(0, -1) : R2_PUBLIC_URL;
-        return `${publicUrl}/${fileName}`;
+        // Return the API proxy URL instead of public URL
+        return `/api/files/${fileName}`;
     } catch (error) {
         console.error('Error uploading file to R2:', error);
         throw new Error('Failed to upload file');
+    }
+}
+
+export async function getFile(fileName: string): Promise<{ buffer: Buffer; contentType: string } | null> {
+    const command = new GetObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: fileName,
+    });
+
+    try {
+        const response = await s3Client.send(command);
+
+        if (!response.Body) {
+            return null;
+        }
+
+        // Convert stream to buffer
+        const stream = response.Body as Readable;
+        const chunks: Buffer[] = [];
+
+        for await (const chunk of stream) {
+            chunks.push(Buffer.from(chunk));
+        }
+
+        return {
+            buffer: Buffer.concat(chunks),
+            contentType: response.ContentType || 'application/octet-stream',
+        };
+    } catch (error) {
+        console.error('Error getting file from R2:', error);
+        return null;
     }
 }
 
@@ -67,6 +97,7 @@ export async function deleteFile(fileName: string): Promise<void> {
 }
 
 export function getFileUrl(fileName: string): string {
-    const publicUrl = R2_PUBLIC_URL?.endsWith('/') ? R2_PUBLIC_URL.slice(0, -1) : R2_PUBLIC_URL;
-    return `${publicUrl}/${fileName}`;
+    // Return the API proxy URL
+    return `/api/files/${fileName}`;
 }
+
