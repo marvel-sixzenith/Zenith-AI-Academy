@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import VideoEditor from './lesson-editors/VideoEditor';
+import PdfEditor from './lesson-editors/PdfEditor';
+import QuizEditor from './lesson-editors/QuizEditor';
+import AssignmentEditor from './lesson-editors/AssignmentEditor';
 
 interface Module {
     id: string;
@@ -18,6 +22,7 @@ interface Lesson {
     orderIndex: number;
     status: string;
     module?: Module;
+    contentData: string | any;
 }
 
 export default function LessonManager() {
