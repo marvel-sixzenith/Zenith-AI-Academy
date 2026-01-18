@@ -1,0 +1,1 @@
+.next/types/validator.ts(143,39): error TS2307: Cannot find module '../../src/app/(member)/leaderboard/page.js' or its corresponding type declarations.
