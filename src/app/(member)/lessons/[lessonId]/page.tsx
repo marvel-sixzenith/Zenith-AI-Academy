@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, CheckCircle, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Eye } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import LessonContentRenderer from '@/components/learning/LessonContentRenderer';
@@ -17,6 +17,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
     if (!session?.user) {
         redirect('/login');
     }
+
+    // Check if user is admin (preview mode)
+    const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPER_ADMIN';
 
     // Fetch lesson data directly
     const data = await getLessonById(lessonId, session?.user?.id);
@@ -39,6 +42,17 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
     return (
         <div className="space-y-6">
+            {/* Admin Preview Mode Banner */}
+            {isAdmin && (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                    <Eye className="w-5 h-5 shrink-0" />
+                    <div>
+                        <p className="font-semibold">Preview Mode</p>
+                        <p className="text-sm text-amber-400/80">You are viewing this lesson as an admin. Your progress will NOT be saved.</p>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex bg-[var(--background-secondary)]/50 p-4 rounded-2xl border border-[var(--border-color)] items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -54,7 +68,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
                                 Module: {lesson.module.name}
                             </span>
-                            {isCompleted && (
+                            {isCompleted && !isAdmin && (
                                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 flex items-center gap-1">
                                     <CheckCircle className="w-3 h-3" />
                                     Completed
@@ -77,19 +91,26 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             contentData={lesson.contentData}
                             lessonId={lesson.id}
                             lessonTitle={lesson.title}
+                            isPreviewMode={isAdmin}
                         />
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 glass-card">
                         <div className="flex items-center gap-2">
-                            <span className="text-[var(--text-secondary)]">
-                                Earn <strong className="text-[var(--primary-light)]">+{lesson.pointsValue} points</strong> for completing this lesson
-                            </span>
+                            {isAdmin ? (
+                                <span className="text-amber-400 text-sm">
+                                    Preview mode - progress not tracked
+                                </span>
+                            ) : (
+                                <span className="text-[var(--text-secondary)]">
+                                    Earn <strong className="text-[var(--primary-light)]">+{lesson.pointsValue} points</strong> for completing this lesson
+                                </span>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {!isCompleted && lesson.contentType !== 'QUIZ' && (
+                            {!isCompleted && !isAdmin && lesson.contentType !== 'QUIZ' && (
                                 <LessonCompleteButton
                                     lessonId={lessonId}
                                     lessonTitle={lesson.title}

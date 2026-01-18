@@ -21,9 +21,10 @@ interface QuizRunnerProps {
     onPass?: () => void;
     lessonId?: string;
     lessonTitle?: string;
+    isPreviewMode?: boolean;
 }
 
-export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: QuizRunnerProps) {
+export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPreviewMode = false }: QuizRunnerProps) {
     const router = useRouter();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -96,7 +97,10 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
 
         if (finalScore >= data.passing_score) {
             onPass?.();
-            await markLessonAsComplete();
+            // Only save progress if NOT in preview mode
+            if (!isPreviewMode) {
+                await markLessonAsComplete();
+            }
         }
     };
 
@@ -141,8 +145,8 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
             <div className="max-w-2xl mx-auto">
                 {/* Results Card */}
                 <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 text-center ${passed
-                        ? 'bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-teal-500/10 border border-emerald-500/20'
-                        : 'bg-gradient-to-br from-rose-500/10 via-red-500/5 to-pink-500/10 border border-rose-500/20'
+                    ? 'bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-teal-500/10 border border-emerald-500/20'
+                    : 'bg-gradient-to-br from-rose-500/10 via-red-500/5 to-pink-500/10 border border-rose-500/20'
                     }`}>
                     {/* Decorative Elements */}
                     <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl ${passed ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`} />
@@ -150,8 +154,8 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
 
                     {/* Icon */}
                     <div className={`relative w-28 h-28 mx-auto mb-6 rounded-full flex items-center justify-center ${passed
-                            ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/30'
-                            : 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-lg shadow-rose-500/30'
+                        ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/30'
+                        : 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-lg shadow-rose-500/30'
                         }`}>
                         {passed ? (
                             <Award className="w-14 h-14 text-white" />
@@ -272,14 +276,14 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
                                     key={index}
                                     onClick={() => handleOptionSelect(index)}
                                     className={`w-full group relative flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${isSelected
-                                            ? 'border-[var(--primary)] bg-[var(--primary)]/10 shadow-lg shadow-[var(--primary)]/10 scale-[1.02]'
-                                            : 'border-[var(--border-color)] hover:border-[var(--primary)]/50 hover:bg-[var(--background-card)]'
+                                        ? 'border-[var(--primary)] bg-[var(--primary)]/10 shadow-lg shadow-[var(--primary)]/10 scale-[1.02]'
+                                        : 'border-[var(--border-color)] hover:border-[var(--primary)]/50 hover:bg-[var(--background-card)]'
                                         }`}
                                 >
                                     {/* Option Letter Badge */}
                                     <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold transition-all duration-200 ${isSelected
-                                            ? 'bg-gradient-to-br from-[var(--primary)] to-blue-600 text-white shadow-lg shadow-[var(--primary)]/25'
-                                            : 'bg-[var(--background-secondary)] text-[var(--text-muted)] group-hover:bg-[var(--primary)]/20 group-hover:text-[var(--primary)]'
+                                        ? 'bg-gradient-to-br from-[var(--primary)] to-blue-600 text-white shadow-lg shadow-[var(--primary)]/25'
+                                        : 'bg-[var(--background-secondary)] text-[var(--text-muted)] group-hover:bg-[var(--primary)]/20 group-hover:text-[var(--primary)]'
                                         }`}>
                                         {optionLetter}
                                     </div>
@@ -292,8 +296,8 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
 
                                     {/* Selection Indicator */}
                                     <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected
-                                            ? 'border-[var(--primary)] bg-[var(--primary)]'
-                                            : 'border-[var(--border-color)] group-hover:border-[var(--primary)]/50'
+                                        ? 'border-[var(--primary)] bg-[var(--primary)]'
+                                        : 'border-[var(--border-color)] group-hover:border-[var(--primary)]/50'
                                         }`}>
                                         {isSelected && (
                                             <CheckCircle className="w-4 h-4 text-white" />
@@ -322,8 +326,8 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
                             onClick={handleNext}
                             disabled={selectedOption === null}
                             className={`inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-white transition-all duration-300 ${selectedOption !== null
-                                    ? 'bg-gradient-to-r from-[var(--primary)] to-blue-600 shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 hover:scale-105 active:scale-95'
-                                    : 'bg-[var(--text-muted)]/30 cursor-not-allowed'
+                                ? 'bg-gradient-to-r from-[var(--primary)] to-blue-600 shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 hover:scale-105 active:scale-95'
+                                : 'bg-[var(--text-muted)]/30 cursor-not-allowed'
                                 }`}
                         >
                             {isLastQuestion ? 'Submit Quiz' : 'Next Question'}

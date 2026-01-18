@@ -8,9 +8,16 @@ interface LessonContentRendererProps {
     contentData: any;
     lessonId?: string;
     lessonTitle?: string;
+    isPreviewMode?: boolean;
 }
 
-export default function LessonContentRenderer({ contentType, contentData, lessonId, lessonTitle }: LessonContentRendererProps) {
+export default function LessonContentRenderer({
+    contentType,
+    contentData,
+    lessonId,
+    lessonTitle,
+    isPreviewMode = false
+}: LessonContentRendererProps) {
     if (!contentData) return null;
 
     switch (contentType) {
@@ -35,6 +42,7 @@ export default function LessonContentRenderer({ contentType, contentData, lesson
                     data={contentData}
                     lessonId={lessonId}
                     lessonTitle={lessonTitle}
+                    isPreviewMode={isPreviewMode}
                 />
             );
 
