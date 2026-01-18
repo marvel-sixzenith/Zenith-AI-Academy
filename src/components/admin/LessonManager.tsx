@@ -303,25 +303,38 @@ export default function LessonManager() {
                             )}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                             <div>
-                                <label className="block text-sm font-medium mb-2">Points</label>
+                                <label className="block text-sm font-medium mb-2">
+                                    Points Reward
+                                </label>
                                 <input
                                     type="number"
+                                    min="0"
                                     value={formData.pointsValue}
-                                    onChange={(e) => setFormData({ ...formData, pointsValue: parseInt(e.target.value) })}
-                                    className="input-field"
+                                    onChange={(e) => setFormData({ ...formData, pointsValue: parseInt(e.target.value) || 0 })}
+                                    className="input-field w-full"
                                 />
+                                <p className="text-xs text-[var(--text-muted)] mt-1">
+                                    Points earned upon completion
+                                </p>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2">Order</label>
+                                <label className="block text-sm font-medium mb-2">
+                                    Position
+                                </label>
                                 <input
                                     type="number"
+                                    min="0"
                                     value={formData.orderIndex}
-                                    onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) })}
-                                    className="input-field"
+                                    onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) || 0 })}
+                                    className="input-field w-full"
+                                    placeholder="0"
                                 />
+                                <p className="text-xs text-[var(--text-muted)] mt-1">
+                                    Lower = appears first in module
+                                </p>
                             </div>
 
                             <div>
@@ -329,11 +342,14 @@ export default function LessonManager() {
                                 <select
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="input-field"
+                                    className="input-field w-full"
                                 >
-                                    <option value="DRAFT">Draft</option>
-                                    <option value="PUBLISHED">Published</option>
+                                    <option value="DRAFT">📝 Draft</option>
+                                    <option value="PUBLISHED">✅ Published</option>
                                 </select>
+                                <p className="text-xs text-[var(--text-muted)] mt-1">
+                                    Draft = hidden from students
+                                </p>
                             </div>
                         </div>
 
