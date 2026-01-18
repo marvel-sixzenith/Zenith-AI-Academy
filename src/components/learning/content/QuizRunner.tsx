@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, ChevronRight, RotateCcw, HelpCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronRight, RotateCcw, Sparkles, Award, Target } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
 interface Question {
     id: string;
     question: string;
+    text?: string; // fallback for different data structures
     options: string[];
-    correctAnswer: number; // 0-indexed
+    correctAnswer: number;
 }
 
 interface QuizRunnerProps {
@@ -26,26 +27,27 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
     const router = useRouter();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
-    const [answers, setAnswers] = useState<number[]>([]); // Store selected indices
+    const [answers, setAnswers] = useState<number[]>([]);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [score, setScore] = useState(0);
     const [isCompleting, setIsCompleting] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(false);
 
     const currentQuestion = data.questions[currentQuestionIndex];
+    const questionText = currentQuestion?.question || currentQuestion?.text || 'Question';
     const isLastQuestion = currentQuestionIndex === data.questions.length - 1;
+    const progressPercent = ((currentQuestionIndex + 1) / data.questions.length) * 100;
 
     // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (isSubmitted) return;
+            if (isSubmitted || showFeedback) return;
 
-            // Number keys 1-9
             const key = parseInt(e.key);
             if (!isNaN(key) && key >= 1 && key <= currentQuestion.options.length) {
                 handleOptionSelect(key - 1);
             }
 
-            // Enter key to proceed if option selected
             if (e.key === 'Enter' && selectedOption !== null) {
                 handleNext();
             }
@@ -53,10 +55,10 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentQuestion, selectedOption, isSubmitted]);
+    }, [currentQuestion, selectedOption, isSubmitted, showFeedback]);
 
     const handleOptionSelect = (index: number) => {
-        if (isSubmitted) return;
+        if (isSubmitted || showFeedback) return;
         setSelectedOption(index);
     };
 
@@ -70,8 +72,13 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
         if (isLastQuestion) {
             calculateScore(newAnswers);
         } else {
-            setCurrentQuestionIndex(prev => prev + 1);
-            setSelectedOption(null);
+            // Brief feedback animation before moving to next
+            setShowFeedback(true);
+            setTimeout(() => {
+                setCurrentQuestionIndex(prev => prev + 1);
+                setSelectedOption(null);
+                setShowFeedback(false);
+            }, 300);
         }
     };
 
@@ -122,120 +129,207 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: Quiz
         setIsSubmitted(false);
         setScore(0);
         setIsCompleting(false);
+        setShowFeedback(false);
     };
 
+    // Results Screen
     if (isSubmitted) {
         const passed = score >= data.passing_score;
+        const correctAnswers = Math.round((score / 100) * data.questions.length);
+
         return (
-            <div className="glass-card p-10 text-center animate-fade-in max-w-2xl mx-auto">
-                <div className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-6 ring-8 ${passed ? 'bg-green-100 text-green-600 ring-green-50' : 'bg-red-100 text-red-600 ring-red-50'
+            <div className="max-w-2xl mx-auto">
+                {/* Results Card */}
+                <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 text-center ${passed
+                        ? 'bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-teal-500/10 border border-emerald-500/20'
+                        : 'bg-gradient-to-br from-rose-500/10 via-red-500/5 to-pink-500/10 border border-rose-500/20'
                     }`}>
-                    {passed ? <CheckCircle className="w-12 h-12" /> : <XCircle className="w-12 h-12" />}
-                </div>
+                    {/* Decorative Elements */}
+                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl ${passed ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`} />
+                    <div className={`absolute -bottom-20 -left-20 w-40 h-40 rounded-full blur-3xl ${passed ? 'bg-teal-500/20' : 'bg-pink-500/20'}`} />
 
-                <h2 className="text-4xl font-bold mb-3">{passed ? 'Quiz Passed!' : 'Needs Improvement'}</h2>
-                <p className="text-lg text-[var(--text-secondary)] mb-8">
-                    You scored <strong className={passed ? 'text-green-600' : 'text-red-600'}>{score.toFixed(0)}%</strong>
-                    <span className="mx-2">•</span>
-                    Passing score: {data.passing_score}%
-                </p>
-
-                {passed ? (
-                    <div className="bg-green-50 border border-green-100 rounded-xl p-6 mb-8 text-green-800">
-                        <p className="font-medium mb-4">
-                            Great job! You've mastered this topic. Your progress has been saved.
-                        </p>
-                        {isCompleting ? (
-                            <div className="text-sm font-medium animate-pulse">Saving progress...</div>
+                    {/* Icon */}
+                    <div className={`relative w-28 h-28 mx-auto mb-6 rounded-full flex items-center justify-center ${passed
+                            ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/30'
+                            : 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-lg shadow-rose-500/30'
+                        }`}>
+                        {passed ? (
+                            <Award className="w-14 h-14 text-white" />
                         ) : (
-                            <p className="text-sm opacity-80">You can proceed to the next lesson or review this one.</p>
+                            <Target className="w-14 h-14 text-white" />
                         )}
                     </div>
-                ) : (
-                    <button onClick={resetQuiz} className="btn-primary w-full sm:w-auto mx-auto flex items-center justify-center gap-2 h-12 px-8 text-lg">
-                        <RotateCcw className="w-5 h-5" />
-                        Try Again
-                    </button>
-                )}
+
+                    {/* Title */}
+                    <h2 className="relative text-3xl md:text-4xl font-bold mb-2">
+                        {passed ? 'Excellent Work!' : 'Keep Practicing!'}
+                    </h2>
+                    <p className="relative text-[var(--text-secondary)] mb-8">
+                        {passed
+                            ? "You've demonstrated mastery of this topic."
+                            : "Review the material and try again."}
+                    </p>
+
+                    {/* Score Display */}
+                    <div className="relative flex items-center justify-center gap-8 mb-8">
+                        <div className="text-center">
+                            <div className={`text-5xl font-bold ${passed ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {score.toFixed(0)}%
+                            </div>
+                            <div className="text-sm text-[var(--text-muted)] mt-1">Your Score</div>
+                        </div>
+                        <div className="w-px h-16 bg-[var(--border-color)]" />
+                        <div className="text-center">
+                            <div className="text-5xl font-bold text-[var(--text-secondary)]">
+                                {correctAnswers}/{data.questions.length}
+                            </div>
+                            <div className="text-sm text-[var(--text-muted)] mt-1">Correct</div>
+                        </div>
+                    </div>
+
+                    {/* Action */}
+                    {passed ? (
+                        <div className="relative space-y-3">
+                            {isCompleting ? (
+                                <div className="flex items-center justify-center gap-2 text-emerald-400">
+                                    <Sparkles className="w-5 h-5 animate-pulse" />
+                                    <span>Saving your progress...</span>
+                                </div>
+                            ) : (
+                                <p className="text-emerald-400 flex items-center justify-center gap-2">
+                                    <CheckCircle className="w-5 h-5" />
+                                    Progress saved! Ready for the next lesson.
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            onClick={resetQuiz}
+                            className="relative inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 hover:scale-105 transition-all duration-300"
+                        >
+                            <RotateCcw className="w-5 h-5" />
+                            Try Again
+                        </button>
+                    )}
+                </div>
             </div>
         );
     }
 
+    // Quiz Question Screen
     return (
         <div className="max-w-3xl mx-auto">
-            {/* Header / Progress */}
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--background-secondary)] font-mono text-sm font-bold border border-[var(--border-color)]">
-                        {currentQuestionIndex + 1}
-                    </span>
-                    <span className="text-sm font-medium text-[var(--text-muted)]">/ {data.questions.length} Questions</span>
+            {/* Progress Header */}
+            <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-blue-600 text-white font-bold text-lg shadow-lg shadow-[var(--primary)]/25">
+                            {currentQuestionIndex + 1}
+                        </div>
+                        <div>
+                            <div className="text-sm text-[var(--text-muted)]">Question</div>
+                            <div className="font-semibold text-[var(--text-primary)]">
+                                {currentQuestionIndex + 1} of {data.questions.length}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-sm text-[var(--text-muted)]">Progress</div>
+                        <div className="font-semibold text-[var(--primary)]">{Math.round(progressPercent)}%</div>
+                    </div>
                 </div>
-                <div className="text-xs font-mono text-[var(--text-muted)] bg-[var(--background-secondary)] px-3 py-1 rounded-full">
-                    Press <span className="font-bold border border-[var(--border-color)] px-1 rounded mx-0.5">1</span>-<span className="font-bold border border-[var(--border-color)] px-1 rounded mx-0.5">{currentQuestion.options.length}</span> to select
+
+                {/* Progress Bar */}
+                <div className="h-2 bg-[var(--background-secondary)] rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-gradient-to-r from-[var(--primary)] to-blue-500 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                    />
                 </div>
             </div>
 
-            <div className="glass-card p-8 md:p-10 relative overflow-hidden">
-                {/* Progress Bar Background */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-[var(--background-secondary)]">
-                    <div
-                        className="h-full bg-[var(--primary)] transition-all duration-500 ease-out"
-                        style={{ width: `${((currentQuestionIndex) / data.questions.length) * 100}%` }}
-                    />
-                </div>
+            {/* Question Card */}
+            <div className={`relative overflow-hidden rounded-3xl border border-[var(--border-color)] bg-gradient-to-br from-[var(--background-secondary)] to-[var(--background-card)] transition-all duration-300 ${showFeedback ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
+                {/* Decorative gradient */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--primary)] via-blue-500 to-purple-500" />
 
-                {/* Question */}
-                <div className="mb-10 mt-2">
-                    <h3 className="text-2xl md:text-3xl font-bold leading-tight mb-2">
-                        {currentQuestion.question}
-                    </h3>
-                    <p className="text-[var(--text-muted)] text-sm flex items-center gap-1.5">
-                        <HelpCircle className="w-4 h-4" />
-                        Select the best answer from the options below
-                    </p>
-                </div>
+                <div className="p-8 md:p-10">
+                    {/* Question Text */}
+                    <div className="mb-8">
+                        <h2 className="text-2xl md:text-3xl font-bold leading-tight text-[var(--text-primary)]">
+                            {questionText}
+                        </h2>
+                    </div>
 
-                {/* Options */}
-                <div className="space-y-3 mb-10">
-                    {currentQuestion.options.map((option, index) => (
-                        <div
-                            key={index}
-                            onClick={() => handleOptionSelect(index)}
-                            className={`group relative p-5 pl-14 rounded-xl border-2 cursor-pointer transition-all duration-200 ${selectedOption === index
-                                ? 'border-[var(--primary)] bg-[var(--primary)]/5 shadow-sm scale-[1.01]'
-                                : 'border-[var(--border-color)] hover:border-[var(--primary)]/30 hover:bg-[var(--background-secondary)]'
+                    {/* Options */}
+                    <div className="space-y-3">
+                        {currentQuestion.options.map((option, index) => {
+                            const isSelected = selectedOption === index;
+                            const optionLetter = String.fromCharCode(65 + index); // A, B, C, D...
+
+                            return (
+                                <button
+                                    key={index}
+                                    onClick={() => handleOptionSelect(index)}
+                                    className={`w-full group relative flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${isSelected
+                                            ? 'border-[var(--primary)] bg-[var(--primary)]/10 shadow-lg shadow-[var(--primary)]/10 scale-[1.02]'
+                                            : 'border-[var(--border-color)] hover:border-[var(--primary)]/50 hover:bg-[var(--background-card)]'
+                                        }`}
+                                >
+                                    {/* Option Letter Badge */}
+                                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold transition-all duration-200 ${isSelected
+                                            ? 'bg-gradient-to-br from-[var(--primary)] to-blue-600 text-white shadow-lg shadow-[var(--primary)]/25'
+                                            : 'bg-[var(--background-secondary)] text-[var(--text-muted)] group-hover:bg-[var(--primary)]/20 group-hover:text-[var(--primary)]'
+                                        }`}>
+                                        {optionLetter}
+                                    </div>
+
+                                    {/* Option Text */}
+                                    <span className={`text-lg font-medium flex-1 ${isSelected ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'
+                                        }`}>
+                                        {option}
+                                    </span>
+
+                                    {/* Selection Indicator */}
+                                    <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected
+                                            ? 'border-[var(--primary)] bg-[var(--primary)]'
+                                            : 'border-[var(--border-color)] group-hover:border-[var(--primary)]/50'
+                                        }`}>
+                                        {isSelected && (
+                                            <CheckCircle className="w-4 h-4 text-white" />
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-[var(--border-color)]">
+                        <div className="hidden sm:flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                            <kbd className="px-2 py-1 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-color)] font-mono text-xs">
+                                1-{currentQuestion.options.length}
+                            </kbd>
+                            <span>to select</span>
+                            <span className="mx-2">•</span>
+                            <kbd className="px-2 py-1 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-color)] font-mono text-xs">
+                                Enter
+                            </kbd>
+                            <span>to continue</span>
+                        </div>
+
+                        <button
+                            onClick={handleNext}
+                            disabled={selectedOption === null}
+                            className={`inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-white transition-all duration-300 ${selectedOption !== null
+                                    ? 'bg-gradient-to-r from-[var(--primary)] to-blue-600 shadow-lg shadow-[var(--primary)]/25 hover:shadow-xl hover:shadow-[var(--primary)]/30 hover:scale-105 active:scale-95'
+                                    : 'bg-[var(--text-muted)]/30 cursor-not-allowed'
                                 }`}
                         >
-                            {/* Key Hint Badge */}
-                            <div className={`absolute left-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg border flex items-center justify-center text-sm font-bold transition-colors ${selectedOption === index
-                                ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                                : 'bg-white text-[var(--text-muted)] border-[var(--border-color)] group-hover:border-[var(--primary)]/50'
-                                }`}>
-                                {index + 1}
-                            </div>
-
-                            <span className={`text-lg font-medium ${selectedOption === index ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'}`}>
-                                {option}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between pt-6 border-t border-[var(--border-color)]">
-                    <span className="text-sm text-[var(--text-muted)] hidden sm:inline-block">
-                        Press <kbd className="font-sans px-1.5 py-0.5 rounded border border-[var(--border-color)] bg-[var(--background-secondary)] text-xs">Enter</kbd> to continue
-                    </span>
-
-                    <button
-                        onClick={handleNext}
-                        disabled={selectedOption === null}
-                        className="btn-primary h-12 px-8 text-base flex items-center gap-2 ml-auto disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 transition-all"
-                    >
-                        {isLastQuestion ? 'Submit Quiz' : 'Next Question'}
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
+                            {isLastQuestion ? 'Submit Quiz' : 'Next Question'}
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
