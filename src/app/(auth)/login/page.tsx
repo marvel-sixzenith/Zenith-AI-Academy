@@ -11,7 +11,9 @@ import { Card } from '@/components/ui/Card';
 
 import { useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+import { Suspense } from 'react';
+
+function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
@@ -33,7 +35,24 @@ export default function LoginPage() {
         e.preventDefault();
         setError('');
         setIsLoading(true);
-        // ... rest of submit logic
+        try {
+            const result = await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+            });
+
+            if (result?.error) {
+                setError('Email atau password tidak valid');
+            } else {
+                router.push('/dashboard');
+                router.refresh();
+            }
+        } catch {
+            setError('Terjadi kesalahan. Silakan coba lagi.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleGoogleLogin = async () => {
@@ -171,5 +190,13 @@ export default function LoginPage() {
                 </Card>
             </div >
         </div >
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }
