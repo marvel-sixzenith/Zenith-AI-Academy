@@ -134,7 +134,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         );
     }
 
-    const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&modestbranding=1&rel=0`;
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&rel=0`;
 
     return (
         <div className="space-y-3 max-w-3xl mx-auto">
@@ -148,6 +148,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                     className="w-full h-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
                 />
             </div>
 
