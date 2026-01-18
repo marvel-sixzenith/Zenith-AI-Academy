@@ -194,7 +194,12 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                     {/* Action */}
                     {passed ? (
                         <div className="relative space-y-3">
-                            {isCompleting ? (
+                            {isPreviewMode ? (
+                                <p className="text-amber-400 flex items-center justify-center gap-2">
+                                    <CheckCircle className="w-5 h-5" />
+                                    Preview mode - progress not saved
+                                </p>
+                            ) : isCompleting ? (
                                 <div className="flex items-center justify-center gap-2 text-emerald-400">
                                     <Sparkles className="w-5 h-5 animate-pulse" />
                                     <span>Saving your progress...</span>
