@@ -40,14 +40,35 @@ interface YTPlayer {
     destroy: () => void;
 }
 
-export default function VideoPlayer({ youtubeUrl, onComplete }: VideoPlayerProps) {
+export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoPlayerProps & { videoUrl?: string }) {
+    // 1. Handle Native HTML5 Video
+    if (videoUrl) {
+        return (
+            <div className="space-y-3">
+                <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+                    <video
+                        src={videoUrl}
+                        controls
+                        className="w-full h-full"
+                        onEnded={onComplete}
+                    >
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        );
+    }
+
+    // 2. Handle YouTube
     const playerRef = useRef<YTPlayer | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isReady, setIsReady] = useState(false);
     const [progress, setProgress] = useState(0);
-    const videoId = getYouTubeId(youtubeUrl);
+    const videoId = youtubeUrl ? getYouTubeId(youtubeUrl) : null;
 
     useEffect(() => {
+        if (!videoId) return;
+
         // Load YouTube IFrame API
         if (!window.YT) {
             const tag = document.createElement('script');
@@ -103,7 +124,7 @@ export default function VideoPlayer({ youtubeUrl, onComplete }: VideoPlayerProps
     if (!videoId) {
         return (
             <div className="aspect-video bg-[var(--background-secondary)] rounded-xl flex items-center justify-center">
-                <p className="text-[var(--text-muted)]">Invalid video URL</p>
+                <p className="text-[var(--text-muted)]">Invalid video source</p>
             </div>
         );
     }
@@ -112,20 +133,20 @@ export default function VideoPlayer({ youtubeUrl, onComplete }: VideoPlayerProps
         <div className="space-y-3">
             <div
                 ref={containerRef}
-                className="aspect-video bg-[var(--background-secondary)] rounded-xl overflow-hidden"
+                className="aspect-video bg-[var(--background-secondary)] rounded-xl overflow-hidden shadow-2xl relative z-0"
             >
                 <div id="youtube-player" className="w-full h-full" />
             </div>
 
             {/* Progress Bar */}
             <div className="flex items-center gap-3">
-                <div className="flex-1 progress-bar h-2">
+                <div className="flex-1 progress-bar h-1.5 bg-[var(--background-secondary)] rounded-full overflow-hidden">
                     <div
-                        className="progress-bar-fill"
+                        className="h-full bg-[var(--primary)] transition-all duration-300"
                         style={{ width: `${progress}%` }}
                     />
                 </div>
-                <span className="text-sm text-[var(--text-muted)]">
+                <span className="text-xs text-[var(--text-muted)] font-mono">
                     {Math.round(progress)}%
                 </span>
             </div>
