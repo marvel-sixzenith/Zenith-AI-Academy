@@ -222,26 +222,42 @@ export default function LessonManager() {
             )}
 
             {showForm && (
-                <div className="glass-card p-6">
-                    <h3 className="text-lg font-bold mb-4">
+                <div className="glass-card p-8">
+                    <h3 className="text-xl font-bold mb-6">
                         {editingLesson ? 'Edit Lesson' : 'Create New Lesson'}
                     </h3>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Module *</label>
-                            <select
-                                required
-                                value={formData.moduleId}
-                                onChange={(e) => setFormData({ ...formData, moduleId: e.target.value })}
-                                className="input-field"
-                            >
-                                <option value="">Select a module</option>
-                                {modules.map((module) => (
-                                    <option key={module.id} value={module.id}>
-                                        {module.track?.name} → {module.name}
-                                    </option>
-                                ))}
-                            </select>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Module *</label>
+                                <select
+                                    required
+                                    value={formData.moduleId}
+                                    onChange={(e) => setFormData({ ...formData, moduleId: e.target.value })}
+                                    className="input-field w-full"
+                                >
+                                    <option value="">Select a module</option>
+                                    {modules.map((module) => (
+                                        <option key={module.id} value={module.id}>
+                                            {module.track?.name} → {module.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Content Type *</label>
+                                <select
+                                    value={formData.contentType}
+                                    onChange={(e) => setFormData({ ...formData, contentType: e.target.value })}
+                                    className="input-field w-full"
+                                >
+                                    <option value="VIDEO">Video</option>
+                                    <option value="PDF">PDF</option>
+                                    <option value="QUIZ">Quiz</option>
+                                    <option value="ASSIGNMENT">Assignment</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div>
@@ -251,27 +267,14 @@ export default function LessonManager() {
                                 required
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                className="input-field"
+                                className="input-field w-full text-lg"
                                 placeholder="e.g., Introduction to Automation"
+                                style={{ minWidth: '100%' }}
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Content Type *</label>
-                            <select
-                                value={formData.contentType}
-                                onChange={(e) => setFormData({ ...formData, contentType: e.target.value })}
-                                className="input-field"
-                            >
-                                <option value="VIDEO">Video</option>
-                                <option value="PDF">PDF</option>
-                                <option value="QUIZ">Quiz</option>
-                                <option value="ASSIGNMENT">Assignment</option>
-                            </select>
-                        </div>
-
                         {/* Content Editors */}
-                        <div className="border border-[var(--border-color)] rounded-lg p-4 bg-[var(--background-secondary)]/30">
+                        <div className="border border-[var(--border-color)] rounded-xl p-6 bg-[var(--background-secondary)]/30">
                             <label className="block text-sm font-medium mb-4">Content Configuration</label>
 
                             {formData.contentType === 'VIDEO' && (
