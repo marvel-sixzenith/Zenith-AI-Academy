@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, CheckCircle, GripVertical } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 
 interface Question {
     id: string;
@@ -19,25 +19,28 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
     const [questions, setQuestions] = useState<Question[]>([]);
     const onChangeRef = useRef(onChange);
     const isInitializedRef = useRef(false);
+    const hasLoadedRef = useRef(false);
 
     // Keep ref updated
     useEffect(() => {
         onChangeRef.current = onChange;
     }, [onChange]);
 
-    // Parse initial value only once
+    // Parse initial value only once when value changes AND we haven't loaded yet
     useEffect(() => {
-        if (isInitializedRef.current) return;
+        if (hasLoadedRef.current) return;
 
         try {
             const parsed = JSON.parse(value);
             if (parsed.type === 'quiz' && Array.isArray(parsed.questions)) {
                 setQuestions(parsed.questions);
+                hasLoadedRef.current = true;
+                isInitializedRef.current = true;
             }
         } catch {
             // Ignore parse errors, start empty
+            isInitializedRef.current = true;
         }
-        isInitializedRef.current = true;
     }, [value]);
 
     // Update parent whenever questions change (but NOT on initial load)
@@ -70,13 +73,16 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
 
     const updateQuestionText = (index: number, text: string) => {
         const newQuestions = [...questions];
-        newQuestions[index].text = text;
+        newQuestions[index] = { ...newQuestions[index], text };
         setQuestions(newQuestions);
     };
 
     const addOption = (qIndex: number) => {
         const newQuestions = [...questions];
-        newQuestions[qIndex].options.push('');
+        newQuestions[qIndex] = {
+            ...newQuestions[qIndex],
+            options: [...newQuestions[qIndex].options, '']
+        };
         setQuestions(newQuestions);
     };
 
@@ -85,25 +91,34 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
         // Don't allow less than 2 options
         if (newQuestions[qIndex].options.length <= 2) return;
 
-        newQuestions[qIndex].options.splice(oIndex, 1);
+        const newOptions = [...newQuestions[qIndex].options];
+        newOptions.splice(oIndex, 1);
 
         // Adjust correct answer index if needed
-        if (newQuestions[qIndex].correctAnswer >= oIndex) {
-            newQuestions[qIndex].correctAnswer = Math.max(0, newQuestions[qIndex].correctAnswer - 1);
+        let newCorrectAnswer = newQuestions[qIndex].correctAnswer;
+        if (newCorrectAnswer >= oIndex) {
+            newCorrectAnswer = Math.max(0, newCorrectAnswer - 1);
         }
 
+        newQuestions[qIndex] = {
+            ...newQuestions[qIndex],
+            options: newOptions,
+            correctAnswer: newCorrectAnswer
+        };
         setQuestions(newQuestions);
     };
 
     const updateOptionText = (qIndex: number, oIndex: number, text: string) => {
         const newQuestions = [...questions];
-        newQuestions[qIndex].options[oIndex] = text;
+        const newOptions = [...newQuestions[qIndex].options];
+        newOptions[oIndex] = text;
+        newQuestions[qIndex] = { ...newQuestions[qIndex], options: newOptions };
         setQuestions(newQuestions);
     };
 
     const setCorrectAnswer = (qIndex: number, oIndex: number) => {
         const newQuestions = [...questions];
-        newQuestions[qIndex].correctAnswer = oIndex;
+        newQuestions[qIndex] = { ...newQuestions[qIndex], correctAnswer: oIndex };
         setQuestions(newQuestions);
     };
 
@@ -124,7 +139,7 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
                                 <input
                                     type="text"
                                     placeholder="Enter question text..."
-                                    className="input-field mb-2"
+                                    className="input-field w-full mb-2"
                                     value={q.text}
                                     onChange={(e) => updateQuestionText(qIndex, e.target.value)}
                                 />
@@ -143,7 +158,7 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
                                             <input
                                                 type="text"
                                                 placeholder={`Option ${oIndex + 1}`}
-                                                className="input-field text-sm py-1"
+                                                className="input-field flex-1 text-sm py-1"
                                                 value={opt}
                                                 onChange={(e) => updateOptionText(qIndex, oIndex, e.target.value)}
                                             />
@@ -190,6 +205,3 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
         </div>
     );
 }
-
-// Importing X icon here since I missed it in import list
-import { X } from 'lucide-react';
