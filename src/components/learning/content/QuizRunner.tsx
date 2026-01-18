@@ -95,29 +95,46 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
         setScore(finalScore);
         setIsSubmitted(true);
 
-        if (finalScore >= data.passing_score) {
+        const passed = finalScore >= data.passing_score;
+
+        if (passed) {
             onPass?.();
-            // Only save progress if NOT in preview mode
-            if (!isPreviewMode) {
-                await markLessonAsComplete();
-            }
+        }
+
+        // Always save progress if NOT in preview mode
+        if (!isPreviewMode) {
+            await saveProgress(finalScore, passed);
         }
     };
 
-    const markLessonAsComplete = async () => {
+    const saveProgress = async (finalScore: number, isPassed: boolean) => {
         if (!lessonId) return;
         setIsCompleting(true);
         try {
-            const res = await fetch('/api/lessons/complete', {
+            // Use the new progress endpoint that supports score saving
+            const res = await fetch(`/api/lessons/${lessonId}/progress`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lessonId }),
+                body: JSON.stringify({
+                    score: finalScore,
+                    isCompleted: isPassed
+                }),
             });
 
-            if (!res.ok) throw new Error('Failed to mark complete');
+            if (!res.ok) throw new Error('Failed to save progress');
 
-            toast.success(`Lesson "${lessonTitle || 'Lesson'}" Completed!`);
-            router.refresh();
+            const result = await res.json();
+
+            if (isPassed && result.pointsAwarded > 0) {
+                toast.success(`Lesson "${lessonTitle || 'Lesson'}" Completed! +${result.pointsAwarded} XP`);
+                router.refresh();
+            } else if (isPassed) {
+                toast.success(`Progress saved!`);
+                router.refresh();
+            } else {
+                toast.success('Progress saved. Keep trying!');
+            }
+
         } catch (error) {
             console.error('Completion error:', error);
             toast.error('Failed to save progress');
@@ -192,6 +209,14 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                     </div>
 
                     {/* Action */}
+                    {/* Show saving indicator for both states if isCompleting */}
+                    {isCompleting && (
+                        <div className="flex items-center justify-center gap-2 mb-4 animate-pulse">
+                            <Sparkles className="w-5 h-5" />
+                            <span>Saving your progress...</span>
+                        </div>
+                    )}
+
                     {passed ? (
                         <div className="relative space-y-3">
                             {isPreviewMode ? (
@@ -199,12 +224,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                                     <CheckCircle className="w-5 h-5" />
                                     Preview mode - progress not saved
                                 </p>
-                            ) : isCompleting ? (
-                                <div className="flex items-center justify-center gap-2 text-emerald-400">
-                                    <Sparkles className="w-5 h-5 animate-pulse" />
-                                    <span>Saving your progress...</span>
-                                </div>
-                            ) : (
+                            ) : !isCompleting && (
                                 <p className="text-emerald-400 flex items-center justify-center gap-2">
                                     <CheckCircle className="w-5 h-5" />
                                     Progress saved! Ready for the next lesson.
@@ -214,7 +234,8 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                     ) : (
                         <button
                             onClick={resetQuiz}
-                            className="relative inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 hover:scale-105 transition-all duration-300"
+                            disabled={isCompleting}
+                            className={`relative inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 hover:scale-105 transition-all duration-300 ${isCompleting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <RotateCcw className="w-5 h-5" />
                             Try Again
