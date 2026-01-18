@@ -23,6 +23,7 @@ interface TopNavProps {
         name?: string | null;
         email?: string | null;
         role?: string;
+        image?: string | null;
     };
 }
 
@@ -88,9 +89,20 @@ export default function TopNav({ user }: TopNavProps) {
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                                 className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[var(--background-card)] transition"
                             >
-                                <div className="w-8 h-8 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] font-medium">
-                                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                                </div>
+                                {user.image ? (
+                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-[var(--border-color)]">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={user.image}
+                                            alt={user.name || 'User'}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] font-medium">
+                                        {user.name?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                )}
                             </button>
 
                             {isProfileOpen && (

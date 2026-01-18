@@ -87,6 +87,19 @@ export const authConfig: NextAuthConfig = {
                 token.role = (user as { role?: string }).role;
                 token.picture = user.image;
             }
+
+            // Fetch fresh user data to get updated image
+            if (token.id) {
+                const freshUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    select: { image: true, role: true },
+                });
+                if (freshUser) {
+                    token.picture = freshUser.image;
+                    token.role = freshUser.role;
+                }
+            }
+
             return token;
         },
         async session({ session, token }) {
