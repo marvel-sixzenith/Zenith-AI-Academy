@@ -20,6 +20,7 @@ interface SidebarProps {
         name?: string | null;
         email?: string | null;
         role?: string;
+        image?: string | null;
     };
 }
 
@@ -38,7 +39,7 @@ const adminItems = [
 export default function Sidebar({ user }: SidebarProps) {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    const isAdmin = user.role === 'ADMIN';
 
     return (
         <>
@@ -125,9 +126,20 @@ export default function Sidebar({ user }: SidebarProps) {
                 {/* User Info */}
                 <div className="p-4 border-t border-[var(--border-color)]">
                     <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-                        <div className="w-10 h-10 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] font-medium shrink-0">
-                            {user.name?.charAt(0).toUpperCase() || 'U'}
-                        </div>
+                        {user.image ? (
+                            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[var(--border-color)]">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={user.image}
+                                    alt={user.name || 'User'}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <div className="w-10 h-10 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] font-medium shrink-0">
+                                {user.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                        )}
                         {!isCollapsed && (
                             <div className="min-w-0">
                                 <p className="font-medium truncate">{user.name}</p>

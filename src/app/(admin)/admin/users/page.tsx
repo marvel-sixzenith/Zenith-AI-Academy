@@ -6,13 +6,12 @@ import { redirect } from 'next/navigation';
 const roleColors: Record<string, string> = {
     MEMBER: 'var(--primary)',
     ADMIN: 'var(--success)',
-    SUPER_ADMIN: 'var(--warning)',
 };
 
 export default async function UsersPage() {
     const session = await auth();
 
-    if (!session?.user || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+    if (!session?.user || session.user.role !== 'ADMIN') {
         redirect('/dashboard');
     }
 

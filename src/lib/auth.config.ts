@@ -86,7 +86,7 @@ export const authConfig: NextAuthConfig = {
             }
 
             // Check admin role for admin routes
-            if (isOnAdmin && auth?.user?.role !== 'ADMIN' && auth?.user?.role !== 'SUPER_ADMIN') {
+            if (isOnAdmin && auth?.user?.role !== 'ADMIN') {
                 return Response.redirect(new URL('/dashboard', nextUrl));
             }
 

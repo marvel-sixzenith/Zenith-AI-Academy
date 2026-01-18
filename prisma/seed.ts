@@ -31,11 +31,11 @@ async function main() {
         return user;
     };
 
-    // 1. Super Admin
+    // 1. Super Admin (Converted to Admin)
     await upsertUser(
         'ade@zenithaiacademy.com',
         'Ade SuperAdmin',
-        'SUPER_ADMIN',
+        'ADMIN',
         'superadmin'
     );
 

@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 export default async function AdminDashboardPage() {
     const session = await auth();
 
-    if (!session?.user || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
+    if (!session?.user || session.user.role !== 'ADMIN') {
         redirect('/dashboard');
     }
 
@@ -57,6 +57,7 @@ export default async function AdminDashboardPage() {
             id: true,
             name: true,
             email: true,
+            image: true,
             createdAt: true
         }
     });
@@ -173,12 +174,23 @@ export default async function AdminDashboardPage() {
 
                 <div className="glass-card divide-y divide-[var(--border-color)]">
                     {recentSignups.length > 0 ? (
-                        recentSignups.map((user: { id: string; name: string; email: string; createdAt: Date }) => (
+                        recentSignups.map((user: { id: string; name: string; email: string; image?: string | null; createdAt: Date }) => (
                             <div key={user.id} className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-medium">
-                                        {user.name.charAt(0)}
-                                    </div>
+                                    {user.image ? (
+                                        <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[var(--border-color)]">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={user.image}
+                                                alt={user.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-medium">
+                                            {user.name.charAt(0)}
+                                        </div>
+                                    )}
                                     <div>
                                         <p className="font-medium">{user.name}</p>
                                         <p className="text-sm text-[var(--text-muted)]">{user.email}</p>

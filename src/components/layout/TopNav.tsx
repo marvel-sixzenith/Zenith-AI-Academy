@@ -37,7 +37,7 @@ const mobileNavItems = [
 export default function TopNav({ user }: TopNavProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    const isAdmin = user.role === 'ADMIN';
 
     const handleSignOut = async () => {
         await signOut({ callbackUrl: '/login' });
