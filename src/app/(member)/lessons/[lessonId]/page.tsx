@@ -77,6 +77,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             <LessonContentRenderer
                                 contentType={lesson.contentType}
                                 contentData={lesson.contentData}
+                                lessonId={lesson.id}
+                                lessonTitle={lesson.title}
                             />
                         </div>
 
@@ -89,7 +91,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                {!isCompleted && (
+                                {!isCompleted && lesson.contentType !== 'QUIZ' && (
                                     <LessonCompleteButton
                                         lessonId={lessonId}
                                         lessonTitle={lesson.title}

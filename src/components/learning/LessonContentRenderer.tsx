@@ -6,9 +6,11 @@ import AssignmentView from './content/AssignmentView';
 interface LessonContentRendererProps {
     contentType: string;
     contentData: any;
+    lessonId?: string;
+    lessonTitle?: string;
 }
 
-export default function LessonContentRenderer({ contentType, contentData }: LessonContentRendererProps) {
+export default function LessonContentRenderer({ contentType, contentData, lessonId, lessonTitle }: LessonContentRendererProps) {
     if (!contentData) return null;
 
     switch (contentType) {
@@ -31,6 +33,8 @@ export default function LessonContentRenderer({ contentType, contentData }: Less
             return (
                 <QuizRunner
                     data={contentData}
+                    lessonId={lessonId}
+                    lessonTitle={lessonTitle}
                 />
             );
 

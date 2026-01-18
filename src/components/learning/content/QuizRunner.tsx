@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertCircle, ChevronRight, RotateCcw, HelpCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 interface Question {
     id: string;
@@ -16,14 +18,18 @@ interface QuizRunnerProps {
         passing_score: number;
     };
     onPass?: () => void;
+    lessonId?: string;
+    lessonTitle?: string;
 }
 
-export default function QuizRunner({ data, onPass }: QuizRunnerProps) {
+export default function QuizRunner({ data, onPass, lessonId, lessonTitle }: QuizRunnerProps) {
+    const router = useRouter();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [answers, setAnswers] = useState<number[]>([]); // Store selected indices
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [score, setScore] = useState(0);
+    const [isCompleting, setIsCompleting] = useState(false);
 
     const currentQuestion = data.questions[currentQuestionIndex];
     const isLastQuestion = currentQuestionIndex === data.questions.length - 1;
@@ -69,7 +75,7 @@ export default function QuizRunner({ data, onPass }: QuizRunnerProps) {
         }
     };
 
-    const calculateScore = (finalAnswers: number[]) => {
+    const calculateScore = async (finalAnswers: number[]) => {
         let correctCount = 0;
         finalAnswers.forEach((answer, index) => {
             if (answer === data.questions[index].correctAnswer) {
@@ -83,6 +89,29 @@ export default function QuizRunner({ data, onPass }: QuizRunnerProps) {
 
         if (finalScore >= data.passing_score) {
             onPass?.();
+            await markLessonAsComplete();
+        }
+    };
+
+    const markLessonAsComplete = async () => {
+        if (!lessonId) return;
+        setIsCompleting(true);
+        try {
+            const res = await fetch('/api/lessons/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lessonId }),
+            });
+
+            if (!res.ok) throw new Error('Failed to mark complete');
+
+            toast.success(`Lesson "${lessonTitle || 'Lesson'}" Completed!`);
+            router.refresh();
+        } catch (error) {
+            console.error('Completion error:', error);
+            toast.error('Failed to save progress');
+        } finally {
+            setIsCompleting(false);
         }
     };
 
@@ -92,6 +121,7 @@ export default function QuizRunner({ data, onPass }: QuizRunnerProps) {
         setAnswers([]);
         setIsSubmitted(false);
         setScore(0);
+        setIsCompleting(false);
     };
 
     if (isSubmitted) {
@@ -112,9 +142,14 @@ export default function QuizRunner({ data, onPass }: QuizRunnerProps) {
 
                 {passed ? (
                     <div className="bg-green-50 border border-green-100 rounded-xl p-6 mb-8 text-green-800">
-                        <p className="font-medium">
-                            Great job! You've mastered this topic. You can now proceed to the next lesson.
+                        <p className="font-medium mb-4">
+                            Great job! You've mastered this topic. Your progress has been saved.
                         </p>
+                        {isCompleting ? (
+                            <div className="text-sm font-medium animate-pulse">Saving progress...</div>
+                        ) : (
+                            <p className="text-sm opacity-80">You can proceed to the next lesson or review this one.</p>
+                        )}
                     </div>
                 ) : (
                     <button onClick={resetQuiz} className="btn-primary w-full sm:w-auto mx-auto flex items-center justify-center gap-2 h-12 px-8 text-lg">

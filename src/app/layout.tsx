@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   keywords: ["LMS", "learning", "engineering", "entrepreneurship", "AI", "automation", "online business"],
 };
 
+import { Toaster } from 'react-hot-toast';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -23,6 +25,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className={inter.className}>
         {children}
+        <Toaster position="top-center" />
       </body>
     </html>
   );
