@@ -15,6 +15,7 @@ declare global {
                 elementId: string,
                 config: {
                     videoId: string;
+                    host?: string;
                     playerVars?: Record<string, string | number>;
                     events?: {
                         onReady?: (event: { target: YTPlayer }) => void;
@@ -82,10 +83,12 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
 
             playerRef.current = new window.YT.Player('youtube-player', {
                 videoId,
+                host: 'https://www.youtube-nocookie.com', // Use nocookie to avoid bot detection/cookies issues
                 playerVars: {
                     autoplay: 0,
                     modestbranding: 1,
                     rel: 0,
+                    origin: window.location.origin, // improve security and reliability
                 },
                 events: {
                     onReady: () => setIsReady(true),
@@ -123,14 +126,14 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
 
     if (!videoId) {
         return (
-            <div className="aspect-video bg-[var(--background-secondary)] rounded-xl flex items-center justify-center">
+            <div className="aspect-video bg-[var(--background-secondary)] rounded-xl flex items-center justify-center max-w-3xl mx-auto">
                 <p className="text-[var(--text-muted)]">Invalid video source</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-3xl mx-auto">
             <div
                 ref={containerRef}
                 className="aspect-video bg-[var(--background-secondary)] rounded-xl overflow-hidden shadow-2xl relative z-0"
