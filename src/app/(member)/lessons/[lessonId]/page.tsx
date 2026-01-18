@@ -38,109 +38,106 @@ export default async function LessonPage({ params }: LessonPageProps) {
     const trackSlug = lesson.module.track.slug;
 
     return (
-        <div className="min-h-screen -m-6">
-            {/* Top Bar */}
-            <div className="h-14 bg-[var(--background-secondary)] border-b border-[var(--border-color)] flex items-center justify-between px-4">
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex bg-[var(--background-secondary)]/50 p-4 rounded-2xl border border-[var(--border-color)] items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link
                         href={`/tracks/${trackSlug}`}
-                        className="flex items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+                        className="p-2 rounded-full hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] text-[var(--text-secondary)] transition-colors"
+                        title="Back to Track"
                     >
-                        <ChevronLeft className="w-5 h-5" />
-                        <span className="hidden sm:inline">Back to Track</span>
+                        <ChevronLeft className="w-6 h-6" />
                     </Link>
-                    <div className="h-6 w-px bg-[var(--border-color)]" />
-                    <div className="hidden md:block">
-                        <p className="text-sm text-[var(--text-muted)]">{lesson.module.name}</p>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+                                Module: {lesson.module.name}
+                            </span>
+                            {isCompleted && (
+                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3" />
+                                    Completed
+                                </span>
+                            )}
+                        </div>
+                        <h1 className="text-2xl font-bold">{lesson.title}</h1>
                     </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {isCompleted && (
-                        <span className="badge badge-success flex items-center gap-1">
-                            <CheckCircle className="w-4 h-4" />
-                            Completed
-                        </span>
-                    )}
                 </div>
             </div>
 
-            <div className="flex">
+            <div className="flex gap-6 flex-col lg:flex-row">
                 {/* Main Content */}
-                <div className="flex-1 p-6">
-                    <div className="max-w-4xl mx-auto">
-                        {/* Lesson Title */}
-                        <h1 className="text-2xl md:text-3xl font-bold mb-6">{lesson.title}</h1>
+                <div className="flex-1">
 
-                        {/* Content Renderer */}
-                        <div className="mb-8">
-                            <LessonContentRenderer
-                                contentType={lesson.contentType}
-                                contentData={lesson.contentData}
-                                lessonId={lesson.id}
-                                lessonTitle={lesson.title}
-                            />
+                    {/* Content Renderer */}
+                    <div className="mb-8">
+                        <LessonContentRenderer
+                            contentType={lesson.contentType}
+                            contentData={lesson.contentData}
+                            lessonId={lesson.id}
+                            lessonTitle={lesson.title}
+                        />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 glass-card">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[var(--text-secondary)]">
+                                Earn <strong className="text-[var(--primary-light)]">+{lesson.pointsValue} points</strong> for completing this lesson
+                            </span>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 glass-card">
-                            <div className="flex items-center gap-2">
-                                <span className="text-[var(--text-secondary)]">
-                                    Earn <strong className="text-[var(--primary-light)]">+{lesson.pointsValue} points</strong> for completing this lesson
-                                </span>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                {!isCompleted && lesson.contentType !== 'QUIZ' && (
-                                    <LessonCompleteButton
-                                        lessonId={lessonId}
-                                        lessonTitle={lesson.title}
-                                        contentType={lesson.contentType}
-                                    />
-                                )}
-                                {navigation.next && (
-                                    <Link
-                                        href={`/lessons/${navigation.next.id}`}
-                                        className="btn-primary"
-                                    >
-                                        Next Lesson
-                                        <ChevronRight className="w-5 h-5" />
-                                    </Link>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Navigation */}
-                        <div className="flex items-center justify-between mt-8 pt-8 border-t border-[var(--border-color)]">
-                            {navigation.prev ? (
-                                <Link
-                                    href={`/lessons/${navigation.prev.id}`}
-                                    className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
-                                >
-                                    <ChevronLeft className="w-5 h-5" />
-                                    <div className="text-left">
-                                        <p className="text-xs text-[var(--text-muted)]">Previous</p>
-                                        <p className="font-medium">{navigation.prev.title}</p>
-                                    </div>
-                                </Link>
-                            ) : <div />}
-
-                            {navigation.next ? (
+                        <div className="flex items-center gap-3">
+                            {!isCompleted && lesson.contentType !== 'QUIZ' && (
+                                <LessonCompleteButton
+                                    lessonId={lessonId}
+                                    lessonTitle={lesson.title}
+                                    contentType={lesson.contentType}
+                                />
+                            )}
+                            {navigation.next && (
                                 <Link
                                     href={`/lessons/${navigation.next.id}`}
-                                    className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition text-right"
+                                    className="btn-primary"
                                 >
-                                    <div>
-                                        <p className="text-xs text-[var(--text-muted)]">Next</p>
-                                        <p className="font-medium">{navigation.next.title}</p>
-                                    </div>
+                                    Next Lesson
                                     <ChevronRight className="w-5 h-5" />
                                 </Link>
-                            ) : <div />}
+                            )}
                         </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="flex items-center justify-between mt-8 pt-8 border-t border-[var(--border-color)]">
+                        {navigation.prev ? (
+                            <Link
+                                href={`/lessons/${navigation.prev.id}`}
+                                className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                                <div className="text-left">
+                                    <p className="text-xs text-[var(--text-muted)]">Previous</p>
+                                    <p className="font-medium">{navigation.prev.title}</p>
+                                </div>
+                            </Link>
+                        ) : <div />}
+
+                        {navigation.next ? (
+                            <Link
+                                href={`/lessons/${navigation.next.id}`}
+                                className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition text-right"
+                            >
+                                <div>
+                                    <p className="text-xs text-[var(--text-muted)]">Next</p>
+                                    <p className="font-medium">{navigation.next.title}</p>
+                                </div>
+                                <ChevronRight className="w-5 h-5" />
+                            </Link>
+                        ) : <div />}
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
