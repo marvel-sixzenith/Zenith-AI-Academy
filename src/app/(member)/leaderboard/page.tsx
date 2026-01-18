@@ -12,9 +12,6 @@ export const metadata: Metadata = {
 
 async function getLeaderboardData() {
     const users = await prisma.user.findMany({
-        where: {
-            role: 'MEMBER',
-        },
         orderBy: {
             points: 'desc',
         },
