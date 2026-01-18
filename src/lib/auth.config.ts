@@ -61,6 +61,26 @@ export const authConfig: NextAuthConfig = {
         error: '/login',
     },
     callbacks: {
+        async signIn({ user, account }) {
+            // Allow OAuth without email verification
+            if (account?.provider !== 'credentials') {
+                if (account?.provider === 'google') {
+                    if (!user.email) return false;
+
+                    // Check if user exists in database
+                    const existingUser = await prisma.user.findUnique({
+                        where: { email: user.email },
+                    });
+
+                    // If user does not exist, redirect to register page with their info
+                    if (!existingUser) {
+                        return `/register?email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(user.name || '')}`;
+                    }
+                }
+                return true;
+            }
+            return true;
+        },
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;

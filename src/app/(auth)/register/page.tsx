@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Zap, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
@@ -8,8 +8,13 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 
-export default function RegisterPage() {
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+
+function RegisterForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -20,6 +25,19 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const emailParam = searchParams.get('email');
+        const nameParam = searchParams.get('name');
+
+        if (emailParam || nameParam) {
+            setFormData(prev => ({
+                ...prev,
+                email: emailParam || prev.email,
+                name: nameParam || prev.name
+            }));
+        }
+    }, [searchParams]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -195,5 +213,13 @@ export default function RegisterPage() {
                 </Card>
             </div>
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <RegisterForm />
+        </Suspense>
     );
 }
