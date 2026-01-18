@@ -55,6 +55,7 @@ export default async function UsersPage() {
         id: user.id,
         name: user.name,
         email: user.email,
+        image: user.image,
         phone: user.phone,
         role: user.role,
         points: user.points,
@@ -65,7 +66,7 @@ export default async function UsersPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Header */}
+            {/* ... Header ... */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold mb-2">User Management</h1>
@@ -107,9 +108,20 @@ export default async function UsersPage() {
                                 >
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-medium shrink-0">
-                                                {user.name.charAt(0)}
-                                            </div>
+                                            {user.image ? (
+                                                <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[var(--border-color)]">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={user.image}
+                                                        alt={user.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-medium shrink-0">
+                                                    {user.name.charAt(0)}
+                                                </div>
+                                            )}
                                             <div>
                                                 <p className="font-medium">{user.name}</p>
                                                 <p className="text-sm text-[var(--text-muted)]">{user.email}</p>
