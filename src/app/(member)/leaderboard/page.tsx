@@ -12,6 +12,9 @@ export const metadata: Metadata = {
 
 async function getLeaderboardData() {
     const users = await prisma.user.findMany({
+        where: {
+            role: 'MEMBER',
+        },
         orderBy: {
             points: 'desc',
         },
@@ -66,8 +69,8 @@ export default async function LeaderboardPage() {
                             <div
                                 key={user.id}
                                 className={`grid grid-cols-12 gap-4 p-4 items-center transition-colors ${isCurrentUser
-                                        ? 'bg-[var(--primary)]/10 hover:bg-[var(--primary)]/15'
-                                        : 'hover:bg-[var(--background-secondary)]/50'
+                                    ? 'bg-[var(--primary)]/10 hover:bg-[var(--primary)]/15'
+                                    : 'hover:bg-[var(--background-secondary)]/50'
                                     }`}
                             >
                                 <div className="col-span-2 md:col-span-1 flex justify-center font-bold text-[var(--text-secondary)]">
