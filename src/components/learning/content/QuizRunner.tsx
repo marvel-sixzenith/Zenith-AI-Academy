@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertCircle, ChevronRight, RotateCcw, HelpCircle } from 'lucide-react';
 
@@ -166,14 +168,14 @@ export default function QuizRunner({ data, onPass }: QuizRunnerProps) {
                             key={index}
                             onClick={() => handleOptionSelect(index)}
                             className={`group relative p-5 pl-14 rounded-xl border-2 cursor-pointer transition-all duration-200 ${selectedOption === index
-                                    ? 'border-[var(--primary)] bg-[var(--primary)]/5 shadow-sm scale-[1.01]'
-                                    : 'border-[var(--border-color)] hover:border-[var(--primary)]/30 hover:bg-[var(--background-secondary)]'
+                                ? 'border-[var(--primary)] bg-[var(--primary)]/5 shadow-sm scale-[1.01]'
+                                : 'border-[var(--border-color)] hover:border-[var(--primary)]/30 hover:bg-[var(--background-secondary)]'
                                 }`}
                         >
                             {/* Key Hint Badge */}
                             <div className={`absolute left-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg border flex items-center justify-center text-sm font-bold transition-colors ${selectedOption === index
-                                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                                    : 'bg-white text-[var(--text-muted)] border-[var(--border-color)] group-hover:border-[var(--primary)]/50'
+                                ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                                : 'bg-white text-[var(--text-muted)] border-[var(--border-color)] group-hover:border-[var(--primary)]/50'
                                 }`}>
                                 {index + 1}
                             </div>
