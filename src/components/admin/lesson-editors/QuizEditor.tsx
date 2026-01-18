@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, CheckCircle, GripVertical } from 'lucide-react';
 
 interface Question {
@@ -17,9 +17,18 @@ interface QuizEditorProps {
 
 export default function QuizEditor({ value, onChange }: QuizEditorProps) {
     const [questions, setQuestions] = useState<Question[]>([]);
+    const onChangeRef = useRef(onChange);
+    const isInitializedRef = useRef(false);
 
-    // Parse initial value
+    // Keep ref updated
     useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+
+    // Parse initial value only once
+    useEffect(() => {
+        if (isInitializedRef.current) return;
+
         try {
             const parsed = JSON.parse(value);
             if (parsed.type === 'quiz' && Array.isArray(parsed.questions)) {
@@ -28,17 +37,20 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
         } catch {
             // Ignore parse errors, start empty
         }
-    }, []);
+        isInitializedRef.current = true;
+    }, [value]);
 
-    // Update parent whenever questions change
+    // Update parent whenever questions change (but NOT on initial load)
     useEffect(() => {
+        if (!isInitializedRef.current) return;
+
         const quizData = {
             type: 'quiz',
             questions: questions,
             passing_score: 70 // default
         };
-        onChange(JSON.stringify(quizData));
-    }, [questions, onChange]);
+        onChangeRef.current(JSON.stringify(quizData));
+    }, [questions]);
 
     const addQuestion = () => {
         const newQuestion: Question = {
