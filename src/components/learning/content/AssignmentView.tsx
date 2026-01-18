@@ -1,15 +1,19 @@
 'use client';
 
-import { ClipboardList, CheckSquare } from 'lucide-react';
+import { ClipboardList, CheckSquare, FileText, Download } from 'lucide-react';
 
 interface AssignmentViewProps {
     data: {
-        description: string;
+        description?: string;
+        instructions?: string; // Legacy fallback
         checklist?: string[];
+        attachment?: string;
     };
 }
 
 export default function AssignmentView({ data }: AssignmentViewProps) {
+    const content = data.description || data.instructions || '';
+
     return (
         <div className="space-y-6">
             <div className="glass-card p-6 md:p-8">
@@ -25,7 +29,7 @@ export default function AssignmentView({ data }: AssignmentViewProps) {
 
                 <div className="prose prose-invert max-w-none mb-8 text-[var(--text-secondary)]">
                     <p className="whitespace-pre-wrap leading-relaxed">
-                        {data.description}
+                        {content}
                     </p>
                 </div>
 
@@ -46,6 +50,33 @@ export default function AssignmentView({ data }: AssignmentViewProps) {
                                 </li>
                             ))}
                         </ul>
+                    </div>
+                )}
+
+                {data.attachment && (
+                    <div className="mt-6">
+                        <h3 className="font-bold mb-3 text-sm text-[var(--text-muted)] uppercase tracking-wider">
+                            Attached Resource
+                        </h3>
+                        <a
+                            href={data.attachment}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border-color)] bg-[var(--background-secondary)]/30 hover:bg-[var(--background-secondary)] transition group"
+                        >
+                            <div className="w-10 h-10 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]">
+                                <FileText className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate text-sm">
+                                    {data.attachment.split('/').pop()}
+                                </p>
+                                <p className="text-xs text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors">
+                                    Click to download material
+                                </p>
+                            </div>
+                            <Download className="w-5 h-5 text-[var(--text-muted)] group-hover:text-[var(--primary)]" />
+                        </a>
                     </div>
                 )}
             </div>

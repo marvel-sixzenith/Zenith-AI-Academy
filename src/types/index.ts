@@ -109,7 +109,8 @@ export interface QuizQuestion {
 export interface AssignmentContent {
     type: 'assignment';
     description: string;
-    checklist: string[];
+    checklist?: string[];
+    attachment?: string;
 }
 
 // Community types

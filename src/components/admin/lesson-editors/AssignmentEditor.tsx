@@ -17,7 +17,7 @@ export default function AssignmentEditor({ value, onChange }: AssignmentEditorPr
         try {
             const parsed = JSON.parse(value);
             if (parsed.type === 'assignment') {
-                setInstructions(parsed.instructions || '');
+                setInstructions(parsed.description || parsed.instructions || '');
                 setAttachmentUrl(parsed.attachment || '');
             }
         } catch {
@@ -30,7 +30,7 @@ export default function AssignmentEditor({ value, onChange }: AssignmentEditorPr
         setAttachmentUrl(newAttachment);
         onChange(JSON.stringify({
             type: 'assignment',
-            instructions: newInstructions,
+            description: newInstructions, // Mapped to description to match AssignmentContent type
             attachment: newAttachment
         }));
     };
