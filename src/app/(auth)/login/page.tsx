@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -9,35 +9,43 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 
+import { useSearchParams } from 'next/navigation';
+
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    useEffect(() => {
+        const errorParam = searchParams.get('error');
+        if (errorParam === 'OAuthAccountNotLinked') {
+            setError('Email ini sudah terdaftar dengan metode login lain.');
+        } else if (errorParam) {
+            setError('Gagal login dengan Google. Coba lagi.');
+        }
+    }, [searchParams]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+        // ... rest of submit logic
+    };
 
+    const handleGoogleLogin = async () => {
+        setIsLoading(true);
         try {
-            const result = await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
+            await signIn('google', {
+                callbackUrl: '/dashboard',
+                redirect: true,
             });
-
-            if (result?.error) {
-                setError('Email atau password tidak valid');
-            } else {
-                router.push('/dashboard');
-                router.refresh();
-            }
-        } catch {
-            setError('Terjadi kesalahan. Silakan coba lagi.');
-        } finally {
+        } catch (error) {
+            console.error('Google login error:', error);
+            setError('Gagal memulai login Google.');
             setIsLoading(false);
         }
     };
@@ -62,8 +70,9 @@ export default function LoginPage() {
 
                     <button
                         type="button"
-                        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-                        className="w-full h-12 flex items-center justify-center gap-3 bg-white text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-medium mb-6"
+                        onClick={handleGoogleLogin}
+                        disabled={isLoading}
+                        className="w-full h-12 flex items-center justify-center gap-3 bg-white text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-medium mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {/* Google Logo */}
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
