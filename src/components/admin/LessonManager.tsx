@@ -1,11 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, GripVertical } from 'lucide-react';
 import VideoEditor from './lesson-editors/VideoEditor';
 import PdfEditor from './lesson-editors/PdfEditor';
 import QuizEditor from './lesson-editors/QuizEditor';
 import AssignmentEditor from './lesson-editors/AssignmentEditor';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Module {
     id: string;
@@ -25,12 +42,92 @@ interface Lesson {
     contentData: string | any;
 }
 
+// Sortable Lesson Item Component
+function SortableLessonItem({
+    lesson,
+    onEdit,
+    onDelete
+}: {
+    lesson: Lesson;
+    onEdit: (lesson: Lesson) => void;
+    onDelete: (id: string) => void;
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: lesson.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`p-4 flex items-center justify-between border-b border-[var(--border-color)] last:border-b-0 ${isDragging ? 'bg-[var(--primary)]/5' : ''}`}
+        >
+            <div className="flex items-center gap-3">
+                {/* Drag Handle */}
+                <button
+                    {...attributes}
+                    {...listeners}
+                    className="p-1.5 rounded-lg cursor-grab hover:bg-[var(--background-card)] text-[var(--text-muted)] active:cursor-grabbing"
+                    title="Drag to reorder"
+                >
+                    <GripVertical className="w-5 h-5" />
+                </button>
+
+                <div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-[var(--text-muted)] font-mono bg-[var(--background-secondary)] px-1.5 py-0.5 rounded">
+                            #{lesson.orderIndex + 1}
+                        </span>
+                        <h4 className="font-bold">{lesson.title}</h4>
+                        <span className={`badge text-xs ${lesson.status === 'PUBLISHED'
+                            ? 'badge-success'
+                            : 'badge badge-warning'
+                            }`}>
+                            {lesson.status === 'PUBLISHED' ? '✅' : '📝'} {lesson.status}
+                        </span>
+                        <span className="badge text-xs">{lesson.contentType}</span>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)]">
+                        {lesson.module?.track?.name} → {lesson.module?.name} • {lesson.pointsValue} pts
+                    </p>
+                </div>
+            </div>
+            <div className="flex gap-2">
+                <button
+                    onClick={() => onEdit(lesson)}
+                    className="p-2 rounded-lg hover:bg-[var(--background-card)]"
+                >
+                    <Edit className="w-5 h-5" />
+                </button>
+                <button
+                    onClick={() => onDelete(lesson.id)}
+                    className="p-2 rounded-lg hover:bg-red-500/10 text-red-500"
+                >
+                    <Trash2 className="w-5 h-5" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function LessonManager() {
     const [lessons, setLessons] = useState<Lesson[]>([]);
     const [modules, setModules] = useState<Module[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+    const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('all');
     const [formData, setFormData] = useState({
         moduleId: '',
         title: '',
@@ -40,6 +137,13 @@ export default function LessonManager() {
         orderIndex: 0,
         status: 'DRAFT',
     });
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     useEffect(() => {
         fetchData();
@@ -67,11 +171,63 @@ export default function LessonManager() {
             const allLessons = allModules.flatMap((m: any) =>
                 (m.lessons || []).map((l: any) => ({ ...l, module: m }))
             );
+            // Sort by orderIndex
+            allLessons.sort((a: Lesson, b: Lesson) => a.orderIndex - b.orderIndex);
             setLessons(allLessons);
         } catch (error) {
             console.error('Failed to fetch data:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // Get filtered lessons based on selected module
+    const filteredLessons = selectedModuleFilter === 'all'
+        ? lessons
+        : lessons.filter(l => l.moduleId === selectedModuleFilter);
+
+    // Handle drag end
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = filteredLessons.findIndex(l => l.id === active.id);
+        const newIndex = filteredLessons.findIndex(l => l.id === over.id);
+
+        // Reorder locally
+        const reorderedLessons = arrayMove(filteredLessons, oldIndex, newIndex);
+
+        // Update order indices
+        const updatedLessons = reorderedLessons.map((lesson, index) => ({
+            ...lesson,
+            orderIndex: index
+        }));
+
+        // Update state optimistically
+        if (selectedModuleFilter === 'all') {
+            setLessons(updatedLessons);
+        } else {
+            // Merge with lessons from other modules
+            const otherLessons = lessons.filter(l => l.moduleId !== selectedModuleFilter);
+            setLessons([...otherLessons, ...updatedLessons].sort((a, b) => a.orderIndex - b.orderIndex));
+        }
+
+        // Send updates to server
+        try {
+            await Promise.all(
+                updatedLessons.map(lesson =>
+                    fetch(`/api/admin/lessons/${lesson.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderIndex: lesson.orderIndex }),
+                    })
+                )
+            );
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            // Revert on error
+            fetchData();
         }
     };
 
@@ -83,13 +239,10 @@ export default function LessonManager() {
 
             // Handle VIDEO and PDF types - convert URL to proper JSON format
             if (formData.contentType === 'VIDEO' || formData.contentType === 'PDF') {
-                // Check if it's already valid JSON
                 try {
                     const parsed = JSON.parse(contentDataToSend);
-                    // If it's already a proper object, stringify it
                     contentDataToSend = JSON.stringify(parsed);
                 } catch {
-                    // It's just a URL, wrap it in proper JSON format
                     if (contentDataToSend && contentDataToSend !== '{}') {
                         if (formData.contentType === 'VIDEO') {
                             contentDataToSend = JSON.stringify({
@@ -105,7 +258,6 @@ export default function LessonManager() {
                     }
                 }
             } else {
-                // For QUIZ and ASSIGNMENT, validate it's proper JSON
                 try {
                     const parsed = JSON.parse(contentDataToSend);
                     contentDataToSend = JSON.stringify(parsed);
@@ -113,6 +265,13 @@ export default function LessonManager() {
                     alert('Invalid JSON format for content data. Please check your input.');
                     return;
                 }
+            }
+
+            // Auto-calculate order index for new lessons
+            let orderIndex = formData.orderIndex;
+            if (!editingLesson) {
+                const moduleLessons = lessons.filter(l => l.moduleId === formData.moduleId);
+                orderIndex = moduleLessons.length; // Place at end
             }
 
             const url = editingLesson ? `/api/admin/lessons/${editingLesson.id}` : '/api/admin/lessons';
@@ -124,6 +283,7 @@ export default function LessonManager() {
                 body: JSON.stringify({
                     ...formData,
                     contentData: contentDataToSend,
+                    orderIndex,
                 }),
             });
 
@@ -152,13 +312,11 @@ export default function LessonManager() {
     };
 
     const handleEdit = async (lesson: Lesson) => {
-        // Fetch full lesson details including contentData
         try {
             const response = await fetch(`/api/admin/lessons/${lesson.id}`);
             const data = await response.json();
             const lessonData = data.lesson;
 
-            // Parse contentData if it's a string, otherwise use as-is
             let contentDataStr = '{}';
             if (lessonData.contentData) {
                 if (typeof lessonData.contentData === 'string') {
@@ -181,7 +339,6 @@ export default function LessonManager() {
             setShowForm(true);
         } catch (error) {
             console.error('Failed to fetch lesson details:', error);
-            // Fallback to basic data
             setEditingLesson(lesson);
             setFormData({
                 moduleId: lesson.moduleId,
@@ -214,12 +371,31 @@ export default function LessonManager() {
 
     return (
         <div className="space-y-6">
-            {!showForm && (
-                <button onClick={() => setShowForm(true)} className="btn-primary">
-                    <Plus className="w-5 h-5" />
-                    Add New Lesson
-                </button>
-            )}
+            <div className="flex flex-wrap items-center gap-4">
+                {!showForm && (
+                    <button onClick={() => setShowForm(true)} className="btn-primary">
+                        <Plus className="w-5 h-5" />
+                        Add New Lesson
+                    </button>
+                )}
+
+                {/* Module Filter for drag-and-drop */}
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-[var(--text-muted)]">Filter by module:</span>
+                    <select
+                        value={selectedModuleFilter}
+                        onChange={(e) => setSelectedModuleFilter(e.target.value)}
+                        className="input-field text-sm py-2"
+                    >
+                        <option value="all">All Modules</option>
+                        {modules.map((module) => (
+                            <option key={module.id} value={module.id}>
+                                {module.track?.name} → {module.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
 
             {showForm && (
                 <div className="glass-card p-8">
@@ -303,7 +479,7 @@ export default function LessonManager() {
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
                                     Points Reward
@@ -317,23 +493,6 @@ export default function LessonManager() {
                                 />
                                 <p className="text-xs text-[var(--text-muted)] mt-1">
                                     Points earned upon completion
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Position
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={formData.orderIndex}
-                                    onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) || 0 })}
-                                    className="input-field w-full"
-                                    placeholder="0"
-                                />
-                                <p className="text-xs text-[var(--text-muted)] mt-1">
-                                    Lower = appears first in module
                                 </p>
                             </div>
 
@@ -367,45 +526,43 @@ export default function LessonManager() {
                 </div>
             )}
 
-            <div className="glass-card divide-y divide-[var(--border-color)]">
-                {lessons.length === 0 ? (
+            {/* Lessons List with Drag and Drop */}
+            <div className="glass-card overflow-hidden">
+                <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30">
+                    <div className="flex items-center gap-2">
+                        <GripVertical className="w-4 h-4 text-[var(--text-muted)]" />
+                        <span className="text-sm text-[var(--text-muted)]">
+                            Drag lessons to reorder them within the selected module
+                        </span>
+                    </div>
+                </div>
+
+                {filteredLessons.length === 0 ? (
                     <div className="p-8 text-center text-[var(--text-muted)]">
-                        No lessons yet. Create modules first, then add lessons!
+                        {selectedModuleFilter === 'all'
+                            ? 'No lessons yet. Create modules first, then add lessons!'
+                            : 'No lessons in this module yet.'}
                     </div>
                 ) : (
-                    lessons.map((lesson) => (
-                        <div key={lesson.id} className="p-4 flex items-center justify-between">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h4 className="font-bold">{lesson.title}</h4>
-                                    <span className={`badge text-xs ${lesson.status === 'PUBLISHED'
-                                        ? 'badge-success'
-                                        : 'badge badge-warning'
-                                        }`}>
-                                        {lesson.status}
-                                    </span>
-                                    <span className="badge text-xs">{lesson.contentType}</span>
-                                </div>
-                                <p className="text-sm text-[var(--text-muted)]">
-                                    {lesson.module?.track?.name} → {lesson.module?.name} • {lesson.pointsValue} pts
-                                </p>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleEdit(lesson)}
-                                    className="p-2 rounded-lg hover:bg-[var(--background-card)]"
-                                >
-                                    <Edit className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(lesson.id)}
-                                    className="p-2 rounded-lg hover:bg-red-500/10 text-red-500"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-                    ))
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={filteredLessons.map(l => l.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {filteredLessons.map((lesson) => (
+                                <SortableLessonItem
+                                    key={lesson.id}
+                                    lesson={lesson}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                        </SortableContext>
+                    </DndContext>
                 )}
             </div>
         </div>
