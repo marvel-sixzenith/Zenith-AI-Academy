@@ -14,7 +14,7 @@ declare global {
             Player: new (
                 elementId: string,
                 config: {
-                    videoId: string;
+                    videoId?: string;
                     host?: string;
                     playerVars?: Record<string, string | number>;
                     events?: {
@@ -81,15 +81,10 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         const initPlayer = () => {
             if (!videoId || !containerRef.current) return;
 
+            // If player already exists, don't re-init
+            if (playerRef.current) return;
+
             playerRef.current = new window.YT.Player('youtube-player', {
-                videoId,
-                host: 'https://www.youtube-nocookie.com', // Use nocookie to avoid bot detection/cookies issues
-                playerVars: {
-                    autoplay: 0,
-                    modestbranding: 1,
-                    rel: 0,
-                    origin: window.location.origin, // improve security and reliability
-                },
                 events: {
                     onReady: () => setIsReady(true),
                     onStateChange: (event) => {
@@ -109,18 +104,25 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
 
         // Track progress
         const progressInterval = setInterval(() => {
-            if (playerRef.current && isReady) {
-                const currentTime = playerRef.current.getCurrentTime();
-                const duration = playerRef.current.getDuration();
-                if (duration > 0) {
-                    setProgress((currentTime / duration) * 100);
+            if (playerRef.current && isReady && playerRef.current.getCurrentTime) {
+                try {
+                    const currentTime = playerRef.current.getCurrentTime();
+                    const duration = playerRef.current.getDuration();
+                    if (duration > 0) {
+                        setProgress((currentTime / duration) * 100);
+                    }
+                } catch (e) {
+                    // Ignore transient errors
                 }
             }
         }, 1000);
 
         return () => {
             clearInterval(progressInterval);
-            playerRef.current?.destroy();
+            // Don't destroy immediately if we want to keep state, 
+            // but for clean up it's good. 
+            // However, with React strict mode, we might want to be careful.
+            // keeping it simple for now.
         };
     }, [videoId, isReady, onComplete]);
 
@@ -132,13 +134,21 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         );
     }
 
+    const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&modestbranding=1&rel=0`;
+
     return (
         <div className="space-y-3 max-w-3xl mx-auto">
             <div
                 ref={containerRef}
                 className="aspect-video bg-[var(--background-secondary)] rounded-xl overflow-hidden shadow-2xl relative z-0"
             >
-                <div id="youtube-player" className="w-full h-full" />
+                <iframe
+                    id="youtube-player"
+                    src={embedUrl}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                />
             </div>
 
             {/* Progress Bar */}
