@@ -68,6 +68,7 @@ interface VideoPlayerProps {
 }
 
 const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "00:00";
     const date = new Date(seconds * 1000);
     const hh = date.getUTCHours();
     const mm = date.getUTCMinutes();
@@ -78,18 +79,29 @@ const formatTime = (seconds: number) => {
     return `${mm}:${ss}`;
 };
 
+const isYouTubeUrl = (url: string) => {
+    return url.includes('youtube.com') || url.includes('youtu.be');
+};
+
 export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoPlayerProps) {
     const [hasWindow, setHasWindow] = useState(false);
-    const playerRef = useRef<any>(null);
+
+    // Refs
+    const playerRef = useRef<any>(null); // For ReactPlayer (YouTube)
+    const videoRef = useRef<HTMLVideoElement>(null); // For Native Video
     const containerRef = useRef<HTMLDivElement>(null);
     const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Determines Source Type
+    const url = videoUrl || youtubeUrl || "";
+    const isYouTube = isYouTubeUrl(url);
 
     // State
     const [playing, setPlaying] = useState(false);
     const [volume, setVolume] = useState(0.8);
     const [muted, setMuted] = useState(false);
-    const [played, setPlayed] = useState(0);
-    const [loaded, setLoaded] = useState(0); // Buffered
+    const [played, setPlayed] = useState(0); // 0 to 1
+    const [loaded, setLoaded] = useState(0); // 0 to 1 (Buffered)
     const [duration, setDuration] = useState(0);
     const [seeking, setSeeking] = useState(false);
     const [showControls, setShowControls] = useState(true);
@@ -98,15 +110,11 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     const [playbackRate, setPlaybackRate] = useState(1.0);
     const [isBuffering, setIsBuffering] = useState(false);
 
-    const url = videoUrl || youtubeUrl;
-
     useEffect(() => {
         setHasWindow(true);
-
         const handleFullscreenChange = () => {
             setIsFullscreen(!!document.fullscreenElement);
         };
-
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
@@ -114,12 +122,77 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         };
     }, []);
 
+    // Native Video Event Listeners
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!isYouTube && video) {
+            const updateTime = () => {
+                if (!seeking) {
+                    setPlayed(video.currentTime / video.duration || 0);
+                    // Native video buffering
+                    if (video.buffered.length > 0) {
+                        const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                        setLoaded(bufferedEnd / video.duration || 0);
+                    }
+                }
+            };
+            const handleDuration = () => setDuration(video.duration);
+            const handleEnded = () => {
+                setPlaying(false);
+                setShowControls(true);
+                onComplete?.();
+            };
+            const handleWaiting = () => setIsBuffering(true);
+            const handlePlaying = () => setIsBuffering(false);
+            const handleError = (e: any) => {
+                console.error("Native Video Error", e);
+                setError("Failed to load video.");
+            };
+
+            video.addEventListener('timeupdate', updateTime);
+            video.addEventListener('loadedmetadata', handleDuration);
+            video.addEventListener('ended', handleEnded);
+            video.addEventListener('waiting', handleWaiting);
+            video.addEventListener('playing', handlePlaying);
+            video.addEventListener('error', handleError);
+
+            return () => {
+                video.removeEventListener('timeupdate', updateTime);
+                video.removeEventListener('loadedmetadata', handleDuration);
+                video.removeEventListener('ended', handleEnded);
+                video.removeEventListener('waiting', handleWaiting);
+                video.removeEventListener('playing', handlePlaying);
+                video.removeEventListener('error', handleError);
+            };
+        }
+    }, [isYouTube, seeking, onComplete]);
+
+    // Apply Volume/Mute to Native Video
+    useEffect(() => {
+        if (!isYouTube && videoRef.current) {
+            videoRef.current.volume = volume;
+            videoRef.current.muted = muted;
+        }
+    }, [volume, muted, isYouTube]);
+
+    // Apply Play/Pause to Native Video
+    useEffect(() => {
+        if (!isYouTube && videoRef.current) {
+            if (playing) {
+                videoRef.current.play().catch(e => console.error("Play failed", e));
+            } else {
+                videoRef.current.pause();
+            }
+        }
+    }, [playing, isYouTube]);
+
+
     const handleMouseMove = () => {
         setShowControls(true);
         if (controlsTimeoutRef.current) {
             clearTimeout(controlsTimeoutRef.current);
         }
-        if (playing && !isBuffering) {
+        if (playing) {
             controlsTimeoutRef.current = setTimeout(() => {
                 setShowControls(false);
             }, 3000);
@@ -136,17 +209,12 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
 
     const toggleFullscreen = async () => {
         if (!containerRef.current) return;
-
         if (!document.fullscreenElement) {
             try {
                 await containerRef.current.requestFullscreen();
-            } catch (err) {
-                console.error("Error attempting to enable fullscreen:", err);
-            }
+            } catch (err) { console.error("Fullscreen error", err); }
         } else {
-            if (document.exitFullscreen) {
-                await document.exitFullscreen();
-            }
+            if (document.exitFullscreen) await document.exitFullscreen();
         }
     };
 
@@ -158,17 +226,26 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
 
     const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSeeking(true);
-        setPlayed(parseFloat(e.target.value));
+        const newPlayed = parseFloat(e.target.value);
+        setPlayed(newPlayed);
+
+        // Live seek for Native Video
+        if (!isYouTube && videoRef.current) {
+            videoRef.current.currentTime = newPlayed * duration;
+        }
     };
 
     const handleSeekMouseUp = () => {
         setSeeking(false);
-        if (playerRef.current) {
+        if (isYouTube && playerRef.current) {
             playerRef.current.seekTo(played);
+        } else if (!isYouTube && videoRef.current) {
+            videoRef.current.currentTime = played * duration;
         }
     };
 
-    const handleProgress = (state: { played: number; playedSeconds: number; loaded: number; loadedSeconds: number }) => {
+    // ReactPlayer Progress (YouTube only)
+    const handleReactPlayerProgress = (state: { played: number; playedSeconds: number; loaded: number; loadedSeconds: number }) => {
         if (!seeking) {
             setPlayed(state.played);
             setLoaded(state.loaded);
@@ -191,10 +268,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         return (
             <div className="aspect-video bg-slate-900 rounded-2xl flex flex-col items-center justify-center border border-red-500/20 gap-4">
                 <p className="text-red-400 font-medium">{error}</p>
-                <button
-                    onClick={() => setError(null)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors text-white"
-                >
+                <button onClick={() => setError(null)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors text-white">
                     Retry
                 </button>
             </div>
@@ -209,57 +283,58 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                 onMouseMove={handleMouseMove}
                 onMouseLeave={() => playing && setShowControls(false)}
             >
-                {/* Video Layer - Explicit Z-0 */}
-                <div className="absolute inset-0 z-0">
-                    <ReactPlayer
-                        ref={playerRef}
-                        url={url}
-                        width="100%"
-                        height="100%"
-                        playing={playing}
-                        volume={volume}
-                        muted={muted}
-                        playbackRate={playbackRate}
-                        playsinline={true}
-                        style={{ position: 'absolute', top: 0, left: 0 }}
-                        onProgress={handleProgress}
-                        onDuration={setDuration}
-                        onBuffer={() => setIsBuffering(true)}
-                        onBufferEnd={() => setIsBuffering(false)}
-                        onPlay={() => {
-                            setIsBuffering(false);
-                            setPlaying(true);
-                        }}
-                        onPause={() => setPlaying(false)}
-                        onEnded={() => {
-                            setPlaying(false);
-                            setShowControls(true);
-                            onComplete?.();
-                        }}
-                        onError={(e) => {
-                            console.error("Video Player Error:", e);
-                            setError("Failed to load video.");
-                        }}
-                        config={{
-                            youtube: {
-                                playerVars: { showinfo: 0, controls: 0, modestbranding: 1, rel: 0 },
-                                embedOptions: { origin: typeof window !== 'undefined' ? window.location.origin : '' }
-                            } as any
-                        }}
-                    />
+                {/* --- VIDEO LAYER (Z-0) --- */}
+                <div className="absolute inset-0 z-0 flex items-center justify-center bg-black">
+                    {isYouTube ? (
+                        <ReactPlayer
+                            ref={playerRef}
+                            url={url}
+                            width="100%"
+                            height="100%"
+                            playing={playing}
+                            volume={volume}
+                            muted={muted}
+                            playbackRate={playbackRate}
+                            playsinline={true}
+                            onProgress={handleReactPlayerProgress}
+                            onDuration={setDuration}
+                            onBuffer={() => setIsBuffering(true)}
+                            onBufferEnd={() => setIsBuffering(false)}
+                            onPlay={() => { setIsBuffering(false); setPlaying(true); }}
+                            onPause={() => setPlaying(false)}
+                            onEnded={() => { setPlaying(false); setShowControls(true); onComplete?.(); }}
+                            onError={(e) => { console.error("YouTube Error:", e); setError("Failed to load video."); }}
+                            config={{
+                                youtube: {
+                                    playerVars: { showinfo: 0, controls: 0, modestbranding: 1, rel: 0 },
+                                    embedOptions: { origin: typeof window !== 'undefined' ? window.location.origin : '' }
+                                } as any
+                            }}
+                        />
+                    ) : (
+                        <video
+                            ref={videoRef}
+                            src={url}
+                            className="w-full h-full object-contain"
+                            playsInline
+                            onClick={togglePlay} // Native click to play helper
+                        />
+                    )}
                 </div>
 
-                {/* Gradient Overlay - Z-10 */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none z-10" />
+                {/* --- OVERLAYS --- */}
 
-                {/* Click Overlay (Play/Pause) - Z-20 */}
+                {/* 1. Play/Pause Click Overlay (Z-10) */}
                 <div
-                    className="absolute inset-0 z-20"
+                    className="absolute inset-0 z-10"
                     onClick={togglePlay}
                     onDoubleClick={toggleFullscreen}
                 />
 
-                {/* Centered Loading/Play State - Z-30 */}
+                {/* 2. Gradient Overlay (Z-20) */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none z-20" />
+
+                {/* 3. Centered Loading/Play Icon (Z-30) */}
                 <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
                     {isBuffering ? (
                         <div className="bg-black/40 backdrop-blur-sm p-4 rounded-full">
@@ -274,29 +349,28 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                     )}
                 </div>
 
-                {/* Controls Overlay - Z-40 */}
+                {/* 4. Controls Bar (Z-40) */}
                 <div
                     className={`absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-20 pb-4 px-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    onClick={(e) => e.stopPropagation()} // Prevent click-through to togglePlay
                 >
                     <div className="space-y-3">
                         {/* Progress Bar */}
                         <div className="relative group/seeker w-full h-1 cursor-pointer touch-none flex items-center">
-                            {/* Background Track */}
+                            {/* Track */}
                             <div className="absolute w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                                {/* Buffered Bar */}
+                                {/* Buffered */}
                                 <div
                                     className="absolute top-0 left-0 h-full bg-white/30 transition-all duration-300"
                                     style={{ width: `${loaded * 100}%` }}
                                 />
                             </div>
-
-                            {/* Played Bar */}
+                            {/* Played */}
                             <div
                                 className="absolute left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-100 group-hover/seeker:h-1.5"
                                 style={{ width: `${played * 100}%` }}
                             />
-
-                            {/* Scrubber Input */}
+                            {/* Input */}
                             <input
                                 type="range"
                                 min={0}
@@ -309,15 +383,14 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                                 onTouchEnd={handleSeekMouseUp} // For mobile
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
                             />
-
-                            {/* Thumb (Visual only) */}
+                            {/* Thumb */}
                             <div
                                 className="absolute h-3 w-3 bg-white rounded-full shadow pointer-events-none transition-all duration-150 scale-0 group-hover/seeker:scale-100"
                                 style={{ left: `${played * 100}%`, transform: `translateX(-50%) scale(${seeking ? 1 : ''})` }}
                             />
                         </div>
 
-                        {/* Bottom Row Controls */}
+                        {/* Controls Row */}
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 {/* Play/Pause */}
@@ -358,12 +431,6 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                             </div>
 
                             <div className="flex items-center gap-3">
-                                {/* Settings (Future use) */}
-                                {/* <button className="text-white/70 hover:text-white transition-colors">
-                                    <Settings size={18} />
-                                </button> */}
-
-                                {/* Fullscreen */}
                                 <button
                                     onClick={toggleFullscreen}
                                     className="text-white/80 hover:text-white hover:scale-110 transition-all"
