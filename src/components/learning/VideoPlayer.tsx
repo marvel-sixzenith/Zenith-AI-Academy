@@ -1,9 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 import { Loader2, Play } from 'lucide-react';
-import type ReactPlayerType from 'react-player';
+
+// Define minimal props interface since it's not exported reliably
+interface ReactPlayerProps {
+    url?: string;
+    playing?: boolean;
+    controls?: boolean;
+    width?: string | number;
+    height?: string | number;
+    onPlay?: () => void;
+    onPause?: () => void;
+    onProgress?: (state: { played: number; playedSeconds: number; loaded: number; loadedSeconds: number }) => void;
+    onEnded?: () => void;
+    onError?: (e: any) => void;
+    config?: any;
+    style?: React.CSSProperties;
+    className?: string;
+}
 
 // Dynamically import ReactPlayer without SSR
 const ReactPlayer = dynamic(() => import('react-player'), {
@@ -13,7 +29,7 @@ const ReactPlayer = dynamic(() => import('react-player'), {
             <Loader2 className="w-8 h-8 text-[var(--primary)] animate-spin" />
         </div>
     )
-}) as typeof ReactPlayerType;
+}) as ComponentType<ReactPlayerProps>;
 
 interface VideoPlayerProps {
     youtubeUrl?: string;
@@ -75,12 +91,12 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                     playing={isPlaying}
                     onPlay={() => setIsPlaying(true)}
                     onPause={() => setIsPlaying(false)}
-                    onProgress={(state) => setProgress(state.played * 100)}
+                    onProgress={(state: { played: number }) => setProgress(state.played * 100)}
                     onEnded={() => {
                         setIsPlaying(false);
                         onComplete?.();
                     }}
-                    onError={(e) => {
+                    onError={(e: any) => {
                         console.error("Video Player Error:", e);
                         setError("Failed to load video. Please check the source.");
                     }}
@@ -89,7 +105,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                     config={{
                         youtube: {
                             embedOptions: { origin: typeof window !== 'undefined' ? window.location.origin : '' }
-                        },
+                        } as any,
                         file: {
                             attributes: {
                                 controlsList: 'nodownload',
