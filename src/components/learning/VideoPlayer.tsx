@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import { useState, useEffect, useRef, useCallback, ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 import {
@@ -204,166 +202,175 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     }
 
     return (
-        <div
-            ref={containerRef}
-            className={`group relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 transition-all duration-300 ${isFullscreen ? 'rounded-none ring-0' : 'hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]'}`}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => playing && setShowControls(false)}
-        >
-            <ReactPlayer
-                ref={playerRef}
-                url={url}
-                width="100%"
-                height="100%"
-                playing={playing}
-                volume={volume}
-                muted={muted}
-                playbackRate={playbackRate}
-                style={{ position: 'absolute', top: 0, left: 0 }}
-                onProgress={handleProgress}
-                onDuration={setDuration}
-                onBuffer={() => setIsBuffering(true)}
-                onBufferEnd={() => setIsBuffering(false)}
-                onPlay={() => {
-                    setIsBuffering(false);
-                    setPlaying(true);
-                }}
-                onPause={() => setPlaying(false)}
-                onEnded={() => {
-                    setPlaying(false);
-                    setShowControls(true);
-                    onComplete?.();
-                }}
-                onError={(e) => {
-                    console.error("Video Player Error:", e);
-                    setError("Failed to load video.");
-                }}
-                config={{
-                    youtube: {
-                        playerVars: { showinfo: 0, controls: 0, modestbranding: 1, rel: 0 },
-                        embedOptions: { origin: typeof window !== 'undefined' ? window.location.origin : '' }
-                    } as any
-                }}
-            />
-
-            {/* Click Overlay (Play/Pause) */}
+        <div className="w-full max-w-3xl mx-auto">
             <div
-                className="absolute inset-0 z-10"
-                onClick={togglePlay}
-                onDoubleClick={toggleFullscreen}
-            />
-
-            {/* Centered Loading/Play State */}
-            <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
-                {isBuffering ? (
-                    <div className="bg-black/40 backdrop-blur-sm p-4 rounded-full">
-                        <Loader2 className="w-10 h-10 text-white animate-spin" />
-                    </div>
-                ) : !playing && (
-                    <div className={`transition-all duration-300 ${!playing ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-                        <div className="bg-white/10 backdrop-blur-md p-6 rounded-full ring-1 ring-white/20 shadow-2xl">
-                            <Play className="w-10 h-10 text-white fill-white ml-1" />
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Controls Overlay */}
-            <div
-                className={`absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-20 pb-4 px-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                ref={containerRef}
+                className={`group relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 transition-all duration-300 ${isFullscreen ? 'rounded-none ring-0' : 'hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]'}`}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={() => playing && setShowControls(false)}
             >
-                <div className="space-y-3">
-                    {/* Progress Bar */}
-                    <div className="relative group/seeker w-full h-1 cursor-pointer touch-none flex items-center">
-                        {/* Background Track */}
-                        <div className="absolute w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                            {/* Buffered Bar */}
+                {/* Video Layer - Explicit Z-0 */}
+                <div className="absolute inset-0 z-0">
+                    <ReactPlayer
+                        ref={playerRef}
+                        url={url}
+                        width="100%"
+                        height="100%"
+                        playing={playing}
+                        volume={volume}
+                        muted={muted}
+                        playbackRate={playbackRate}
+                        playsinline={true}
+                        style={{ position: 'absolute', top: 0, left: 0 }}
+                        onProgress={handleProgress}
+                        onDuration={setDuration}
+                        onBuffer={() => setIsBuffering(true)}
+                        onBufferEnd={() => setIsBuffering(false)}
+                        onPlay={() => {
+                            setIsBuffering(false);
+                            setPlaying(true);
+                        }}
+                        onPause={() => setPlaying(false)}
+                        onEnded={() => {
+                            setPlaying(false);
+                            setShowControls(true);
+                            onComplete?.();
+                        }}
+                        onError={(e) => {
+                            console.error("Video Player Error:", e);
+                            setError("Failed to load video.");
+                        }}
+                        config={{
+                            youtube: {
+                                playerVars: { showinfo: 0, controls: 0, modestbranding: 1, rel: 0 },
+                                embedOptions: { origin: typeof window !== 'undefined' ? window.location.origin : '' }
+                            } as any
+                        }}
+                    />
+                </div>
+
+                {/* Gradient Overlay - Z-10 */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none z-10" />
+
+                {/* Click Overlay (Play/Pause) - Z-20 */}
+                <div
+                    className="absolute inset-0 z-20"
+                    onClick={togglePlay}
+                    onDoubleClick={toggleFullscreen}
+                />
+
+                {/* Centered Loading/Play State - Z-30 */}
+                <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+                    {isBuffering ? (
+                        <div className="bg-black/40 backdrop-blur-sm p-4 rounded-full">
+                            <Loader2 className="w-10 h-10 text-white animate-spin" />
+                        </div>
+                    ) : !playing && (
+                        <div className={`transition-all duration-300 ${!playing ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
+                            <div className="bg-white/10 backdrop-blur-md p-6 rounded-full ring-1 ring-white/20 shadow-2xl">
+                                <Play className="w-10 h-10 text-white fill-white ml-1" />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Controls Overlay - Z-40 */}
+                <div
+                    className={`absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-20 pb-4 px-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                >
+                    <div className="space-y-3">
+                        {/* Progress Bar */}
+                        <div className="relative group/seeker w-full h-1 cursor-pointer touch-none flex items-center">
+                            {/* Background Track */}
+                            <div className="absolute w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                                {/* Buffered Bar */}
+                                <div
+                                    className="absolute top-0 left-0 h-full bg-white/30 transition-all duration-300"
+                                    style={{ width: `${loaded * 100}%` }}
+                                />
+                            </div>
+
+                            {/* Played Bar */}
                             <div
-                                className="absolute top-0 left-0 h-full bg-white/30 transition-all duration-300"
-                                style={{ width: `${loaded * 100}%` }}
+                                className="absolute left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-100 group-hover/seeker:h-1.5"
+                                style={{ width: `${played * 100}%` }}
+                            />
+
+                            {/* Scrubber Input */}
+                            <input
+                                type="range"
+                                min={0}
+                                max={0.999999}
+                                step="any"
+                                value={played}
+                                onMouseDown={() => setSeeking(true)}
+                                onChange={handleSeekChange}
+                                onMouseUp={handleSeekMouseUp}
+                                onTouchEnd={handleSeekMouseUp} // For mobile
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
+                            />
+
+                            {/* Thumb (Visual only) */}
+                            <div
+                                className="absolute h-3 w-3 bg-white rounded-full shadow pointer-events-none transition-all duration-150 scale-0 group-hover/seeker:scale-100"
+                                style={{ left: `${played * 100}%`, transform: `translateX(-50%) scale(${seeking ? 1 : ''})` }}
                             />
                         </div>
 
-                        {/* Played Bar */}
-                        <div
-                            className="absolute left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-100 group-hover/seeker:h-1.5"
-                            style={{ width: `${played * 100}%` }}
-                        />
-
-                        {/* Scrubber Input */}
-                        <input
-                            type="range"
-                            min={0}
-                            max={0.999999}
-                            step="any"
-                            value={played}
-                            onMouseDown={() => setSeeking(true)}
-                            onChange={handleSeekChange}
-                            onMouseUp={handleSeekMouseUp}
-                            onTouchEnd={handleSeekMouseUp} // For mobile
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                        />
-
-                        {/* Thumb (Visual only) */}
-                        <div
-                            className="absolute h-3 w-3 bg-white rounded-full shadow pointer-events-none transition-all duration-150 scale-0 group-hover/seeker:scale-100"
-                            style={{ left: `${played * 100}%`, transform: `translateX(-50%) scale(${seeking ? 1 : ''})` }}
-                        />
-                    </div>
-
-                    {/* Bottom Row Controls */}
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            {/* Play/Pause */}
-                            <button
-                                onClick={togglePlay}
-                                className="text-white/90 hover:text-white hover:scale-110 transition-all"
-                            >
-                                {playing ? <Pause size={24} className="fill-white/90" /> : <Play size={24} className="fill-white/90" />}
-                            </button>
-
-                            {/* Volume */}
-                            <div className="group/volume flex items-center gap-2">
+                        {/* Bottom Row Controls */}
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                {/* Play/Pause */}
                                 <button
-                                    onClick={toggleMute}
-                                    className="text-white/80 hover:text-white transition-colors"
+                                    onClick={togglePlay}
+                                    className="text-white/90 hover:text-white hover:scale-110 transition-all"
                                 >
-                                    {muted || volume === 0 ? <VolumeX size={20} /> : volume < 0.5 ? <Volume1 size={20} /> : <Volume2 size={20} />}
+                                    {playing ? <Pause size={24} className="fill-white/90" /> : <Play size={24} className="fill-white/90" />}
                                 </button>
-                                <div className="w-0 overflow-hidden transition-all duration-300 group-hover/volume:w-20 pl-1">
-                                    <input
-                                        type="range"
-                                        min={0}
-                                        max={1}
-                                        step={0.1}
-                                        value={muted ? 0 : volume}
-                                        onChange={handleVolumeChange}
-                                        className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
-                                    />
+
+                                {/* Volume */}
+                                <div className="group/volume flex items-center gap-2">
+                                    <button
+                                        onClick={toggleMute}
+                                        className="text-white/80 hover:text-white transition-colors"
+                                    >
+                                        {muted || volume === 0 ? <VolumeX size={20} /> : volume < 0.5 ? <Volume1 size={20} /> : <Volume2 size={20} />}
+                                    </button>
+                                    <div className="w-0 overflow-hidden transition-all duration-300 group-hover/volume:w-20 pl-1">
+                                        <input
+                                            type="range"
+                                            min={0}
+                                            max={1}
+                                            step={0.1}
+                                            value={muted ? 0 : volume}
+                                            onChange={handleVolumeChange}
+                                            className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Time */}
+                                <div className="text-xs font-medium font-mono text-white/70">
+                                    <span>{formatTime(duration * played)}</span>
+                                    <span className="mx-1 opacity-50">/</span>
+                                    <span>{formatTime(duration)}</span>
                                 </div>
                             </div>
 
-                            {/* Time */}
-                            <div className="text-xs font-medium font-mono text-white/70">
-                                <span>{formatTime(duration * played)}</span>
-                                <span className="mx-1 opacity-50">/</span>
-                                <span>{formatTime(duration)}</span>
+                            <div className="flex items-center gap-3">
+                                {/* Settings (Future use) */}
+                                {/* <button className="text-white/70 hover:text-white transition-colors">
+                                    <Settings size={18} />
+                                </button> */}
+
+                                {/* Fullscreen */}
+                                <button
+                                    onClick={toggleFullscreen}
+                                    className="text-white/80 hover:text-white hover:scale-110 transition-all"
+                                >
+                                    {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                                </button>
                             </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            {/* Settings (Future use) */}
-                            {/* <button className="text-white/70 hover:text-white transition-colors">
-                                <Settings size={18} />
-                            </button> */}
-
-                            {/* Fullscreen */}
-                            <button
-                                onClick={toggleFullscreen}
-                                className="text-white/80 hover:text-white hover:scale-110 transition-all"
-                            >
-                                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-                            </button>
                         </div>
                     </div>
                 </div>
