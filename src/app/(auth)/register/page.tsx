@@ -29,6 +29,11 @@ function RegisterForm() {
     useEffect(() => {
         const emailParam = searchParams.get('email');
         const nameParam = searchParams.get('name');
+        const errorParam = searchParams.get('error');
+
+        if (errorParam === 'AccountNotRegistered') {
+            setError('Akun Google ini belum terdaftar. Silakan lanjutkan pendaftaran di bawah.');
+        }
 
         if (emailParam || nameParam) {
             setFormData(prev => ({

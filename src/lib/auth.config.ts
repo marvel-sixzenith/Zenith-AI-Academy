@@ -76,7 +76,7 @@ export const authConfig: NextAuthConfig = {
                         where: { email: user.email },
                     });
                     if (!existingUser) {
-                        return '/login?error=AccountNotRegistered';
+                        return `/register?error=AccountNotRegistered&email=${encodeURIComponent(user.email || '')}&name=${encodeURIComponent(user.name || '')}`;
                     }
                 }
 
