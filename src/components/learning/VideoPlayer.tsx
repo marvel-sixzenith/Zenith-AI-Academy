@@ -3,7 +3,7 @@
 import { MediaPlayer, MediaProvider } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface VideoPlayerProps {
     youtubeUrl?: string;
@@ -12,7 +12,24 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoPlayerProps) {
-    const src = videoUrl || youtubeUrl || "";
+    const [src, setSrc] = useState(videoUrl || youtubeUrl || "");
+
+    useEffect(() => {
+        const rawSrc = videoUrl || youtubeUrl || "";
+        if ((rawSrc.includes('youtube.com') || rawSrc.includes('youtu.be')) && typeof window !== 'undefined') {
+            try {
+                const urlObj = new URL(rawSrc);
+                urlObj.searchParams.set('origin', window.location.origin);
+                // Also force empty widget_referrer to avoid leaking strict referrer policies if any
+                urlObj.searchParams.set('widget_referrer', window.location.origin);
+                setSrc(urlObj.toString());
+            } catch (e) {
+                setSrc(rawSrc);
+            }
+        } else {
+            setSrc(rawSrc);
+        }
+    }, [videoUrl, youtubeUrl]);
 
     // We can still handle basic errors or loading states if needed, 
     // but Vidstack handles most internally.
