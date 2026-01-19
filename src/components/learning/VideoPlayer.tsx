@@ -43,6 +43,9 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                 <MediaPlayer
                     title="Lesson Video"
                     src={src}
+                    load="eager"
+                    crossOrigin
+                    playsInline
                     onEnd={() => onComplete?.()}
                     onError={() => setError(true)}
                     className="w-full h-full"
