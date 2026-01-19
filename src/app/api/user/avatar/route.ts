@@ -64,3 +64,26 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Update Database to remove image reference
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { image: null },
+        });
+
+        // Note: Ideally we should also delete the file from R2 here to save storage,
+        // but for now we'll just unlink it from the user.
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Avatar delete error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
