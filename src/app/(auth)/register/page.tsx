@@ -90,20 +90,16 @@ function RegisterForm() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            await fetch('/api/auth/register', { // Optional: You might not need to hit register endpoint if Google provider handles creation, but keeping consistent
-                // Actually, for Google login, we just redirect. NextAuth handles user creation via adapter.
-            });
-            // Correction: Just use signIn like in Login page
             await import('next-auth/react').then(mod => mod.signIn('google', {
                 callbackUrl: '/dashboard',
                 redirect: true,
             }));
         } catch (error) {
-            console.error('Google login error:', error);
-            setError('Gagal memulai login Google.');
+            console.error(error);
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 py-8">
