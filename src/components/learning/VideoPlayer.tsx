@@ -92,6 +92,9 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     const containerRef = useRef<HTMLDivElement>(null);
     const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // State Refs (to avoid stale closures in event listeners)
+    const seekingRef = useRef(false);
+
     // Determines Source Type
     const url = videoUrl || youtubeUrl || "";
     const isYouTube = isYouTubeUrl(url);
@@ -103,7 +106,6 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     const [played, setPlayed] = useState(0); // 0 to 1
     const [loaded, setLoaded] = useState(0); // 0 to 1 (Buffered)
     const [duration, setDuration] = useState(0);
-    const [seeking, setSeeking] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -127,7 +129,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         const video = videoRef.current;
         if (!isYouTube && video) {
             const updateTime = () => {
-                if (!seeking) {
+                if (!seekingRef.current) {
                     setPlayed(video.currentTime / video.duration || 0);
                     // Native video buffering
                     if (video.buffered.length > 0) {
@@ -140,7 +142,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
             const handleEnded = () => {
                 setPlaying(false);
                 setShowControls(true);
-                onComplete?.();
+                if (onComplete) onComplete();
             };
             const handleWaiting = () => setIsBuffering(true);
             const handlePlaying = () => setIsBuffering(false);
@@ -165,7 +167,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                 video.removeEventListener('error', handleError);
             };
         }
-    }, [isYouTube, seeking, onComplete]);
+    }, [isYouTube, onComplete]); // Removed seeking dependency
 
     // Apply Volume/Mute to Native Video
     useEffect(() => {
@@ -224,10 +226,11 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         setMuted(newVolume === 0);
     };
 
+    // Seek Handler
     const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSeeking(true);
         const newPlayed = parseFloat(e.target.value);
         setPlayed(newPlayed);
+        seekingRef.current = true;
 
         // Live seek for Native Video
         if (!isYouTube && videoRef.current) {
@@ -235,18 +238,22 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         }
     };
 
-    const handleSeekMouseUp = () => {
-        setSeeking(false);
+    const handleSeekMouseUp = (e: any) => {
+        seekingRef.current = false;
+
+        // For ReactPlayer (YouTube)
         if (isYouTube && playerRef.current) {
-            playerRef.current.seekTo(played);
-        } else if (!isYouTube && videoRef.current) {
+            playerRef.current.seekTo(played, 'fraction');
+        }
+        // For Native Video
+        else if (!isYouTube && videoRef.current) {
             videoRef.current.currentTime = played * duration;
         }
     };
 
     // ReactPlayer Progress (YouTube only)
     const handleReactPlayerProgress = (state: { played: number; playedSeconds: number; loaded: number; loadedSeconds: number }) => {
-        if (!seeking) {
+        if (!seekingRef.current) {
             setPlayed(state.played);
             setLoaded(state.loaded);
         }
@@ -268,9 +275,16 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         return (
             <div className="aspect-video bg-slate-900 rounded-2xl flex flex-col items-center justify-center border border-red-500/20 gap-4">
                 <p className="text-red-400 font-medium">{error}</p>
-                <button onClick={() => setError(null)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors text-white">
-                    Retry
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={() => { setError(null); setPlaying(true); }} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors text-white">
+                        Retry
+                    </button>
+                    {isYouTube && (
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors text-white">
+                            Open in YouTube
+                        </a>
+                    )}
+                </div>
             </div>
         );
     }
@@ -302,12 +316,11 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                             onBufferEnd={() => setIsBuffering(false)}
                             onPlay={() => { setIsBuffering(false); setPlaying(true); }}
                             onPause={() => setPlaying(false)}
-                            onEnded={() => { setPlaying(false); setShowControls(true); onComplete?.(); }}
+                            onEnded={() => { setPlaying(false); setShowControls(true); if (onComplete) onComplete(); }}
                             onError={(e) => { console.error("YouTube Error:", e); setError("Failed to load video."); }}
                             config={{
                                 youtube: {
-                                    playerVars: { showinfo: 0, controls: 0, modestbranding: 1, rel: 0 },
-                                    embedOptions: { origin: typeof window !== 'undefined' ? window.location.origin : '' }
+                                    playerVars: { showinfo: 0, controls: 0, modestbranding: 1, rel: 0, origin: typeof window !== 'undefined' ? window.location.origin : '' },
                                 } as any
                             }}
                         />
@@ -377,7 +390,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                                 max={0.999999}
                                 step="any"
                                 value={played}
-                                onMouseDown={() => setSeeking(true)}
+                                onMouseDown={() => { seekingRef.current = true; }}
                                 onChange={handleSeekChange}
                                 onMouseUp={handleSeekMouseUp}
                                 onTouchEnd={handleSeekMouseUp} // For mobile
@@ -386,7 +399,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
                             {/* Thumb */}
                             <div
                                 className="absolute h-3 w-3 bg-white rounded-full shadow pointer-events-none transition-all duration-150 scale-0 group-hover/seeker:scale-100"
-                                style={{ left: `${played * 100}%`, transform: `translateX(-50%) scale(${seeking ? 1 : ''})` }}
+                                style={{ left: `${played * 100}%`, transform: `translateX(-50%) scale(${seekingRef.current ? 1 : ''})` }}
                             />
                         </div>
 
