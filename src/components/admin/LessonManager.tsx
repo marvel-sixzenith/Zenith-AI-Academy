@@ -160,12 +160,13 @@ export default function LessonManager() {
                 )
             );
 
-            const allModules = trackDetails.flatMap((track: any) =>
-                (track.track?.modules || []).map((m: any) => ({
+            const allModules = trackDetails.flatMap((track: any) => {
+                if (!track?.track) return [];
+                return (track.track.modules || []).map((m: any) => ({
                     ...m,
                     track: { name: track.track.name }
-                }))
-            );
+                }));
+            });
             setModules(allModules);
 
             const allLessons = allModules.flatMap((m: any) =>

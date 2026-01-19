@@ -53,12 +53,13 @@ export default function ModuleManager() {
             setTracks(tracksData.tracks || []);
 
             // Flatten modules from all tracks
-            const allModules = (await modulesRes).flatMap((track: any) =>
-                (track.track?.modules || []).map((m: any) => ({
+            const allModules = (await modulesRes).flatMap((track: any) => {
+                if (!track?.track) return [];
+                return (track.track.modules || []).map((m: any) => ({
                     ...m,
                     track: { id: track.track.id, name: track.track.name }
-                }))
-            );
+                }));
+            });
             // Sort by orderIndex
             allModules.sort((a: Module, b: Module) => a.orderIndex - b.orderIndex);
             setModules(allModules);
