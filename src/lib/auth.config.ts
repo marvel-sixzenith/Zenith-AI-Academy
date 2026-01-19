@@ -65,6 +65,21 @@ export const authConfig: NextAuthConfig = {
             // Allow OAuth without email verification
             if (account?.provider === 'google') {
                 if (!user.email) return false;
+
+                // Check intent
+                const { cookies } = await import('next/headers');
+                const cookieStore = await cookies();
+                const intent = cookieStore.get('auth_intent')?.value;
+
+                if (intent === 'login') {
+                    const existingUser = await prisma.user.findUnique({
+                        where: { email: user.email },
+                    });
+                    if (!existingUser) {
+                        return '/login?error=AccountNotRegistered';
+                    }
+                }
+
                 return true;
             }
             return true;

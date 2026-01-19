@@ -90,6 +90,7 @@ function RegisterForm() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
+            document.cookie = "auth_intent=register; path=/; max-age=300"; // 5 minutes
             await import('next-auth/react').then(mod => mod.signIn('google', {
                 callbackUrl: '/dashboard',
                 redirect: true,

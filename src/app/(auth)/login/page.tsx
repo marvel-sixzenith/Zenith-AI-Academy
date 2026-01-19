@@ -26,6 +26,8 @@ function LoginForm() {
         const errorParam = searchParams.get('error');
         if (errorParam === 'OAuthAccountNotLinked') {
             setError('Email ini sudah terdaftar dengan metode login lain.');
+        } else if (errorParam === 'AccountNotRegistered') {
+            setError('Akun belum terdaftar. Silakan buat akun terlebih dahulu.');
         } else if (errorParam) {
             setError('Gagal login dengan Google. Coba lagi.');
         }
@@ -58,6 +60,7 @@ function LoginForm() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
+            document.cookie = "auth_intent=login; path=/; max-age=300"; // 5 minutes
             await signIn('google', {
                 callbackUrl: '/dashboard',
                 redirect: true,
