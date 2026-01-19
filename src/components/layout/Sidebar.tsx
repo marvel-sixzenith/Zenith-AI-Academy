@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import {
     LayoutDashboard,
     BookOpen,
@@ -11,7 +12,8 @@ import {
     Settings,
     Zap,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    LogOut
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -39,7 +41,12 @@ const adminItems = [
 export default function Sidebar({ user }: SidebarProps) {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const isAdmin = user.role === 'ADMIN';
+
+    const handleSignOut = async () => {
+        await signOut({ callbackUrl: '/login' });
+    };
 
     return (
         <>
@@ -124,8 +131,11 @@ export default function Sidebar({ user }: SidebarProps) {
                 </nav>
 
                 {/* User Info */}
-                <div className="p-4 border-t border-[var(--border-color)]">
-                    <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+                <div className="p-4 border-t border-[var(--border-color)] relative">
+                    <button
+                        onClick={() => !isCollapsed && setIsProfileOpen(!isProfileOpen)}
+                        className={`w-full flex items-center gap-3 rounded-xl p-2 transition hover:bg-[var(--background-card)] ${isCollapsed ? 'justify-center cursor-default' : 'cursor-pointer'}`}
+                    >
                         {user.image ? (
                             <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[var(--border-color)]">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -141,12 +151,46 @@ export default function Sidebar({ user }: SidebarProps) {
                             </div>
                         )}
                         {!isCollapsed && (
-                            <div className="min-w-0">
-                                <p className="font-medium truncate">{user.name}</p>
+                            <div className="min-w-0 flex-1 text-left">
+                                <p className="font-medium truncate text-sm">{user.name}</p>
                                 <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
                             </div>
                         )}
-                    </div>
+                    </button>
+
+                    {/* Profile Dropdown - Upwards since it's at the bottom */}
+                    {!isCollapsed && isProfileOpen && (
+                        <div className="absolute bottom-full left-4 right-4 mb-2 glass-card py-2 animate-fade-in shadow-xl z-50">
+                            <div className="px-4 py-2 border-b border-[var(--border-color)] mb-1">
+                                <p className="font-medium truncate text-sm">{user.name}</p>
+                            </div>
+                            <Link
+                                href="/profile"
+                                className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--background-card)] transition text-sm"
+                                onClick={() => setIsProfileOpen(false)}
+                            >
+                                <User className="w-4 h-4" />
+                                Profil Saya
+                            </Link>
+                            {isAdmin && (
+                                <Link
+                                    href="/admin"
+                                    className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--background-card)] transition text-sm"
+                                    onClick={() => setIsProfileOpen(false)}
+                                >
+                                    <Settings className="w-4 h-4" />
+                                    Panel Admin
+                                </Link>
+                            )}
+                            <button
+                                onClick={handleSignOut}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-[var(--error)] hover:bg-[var(--background-card)] transition text-sm"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Keluar
+                            </button>
+                        </div>
+                    )}
                 </div>
             </aside>
         </>
