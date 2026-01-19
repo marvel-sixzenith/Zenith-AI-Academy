@@ -30,7 +30,7 @@ export const authConfig: NextAuthConfig = {
                     where: { email },
                 });
 
-                if (!user) {
+                if (!user || !user.password) {
                     return null;
                 }
 

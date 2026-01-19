@@ -15,7 +15,7 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  password      String    // hashed with bcrypt
+  password      String?   // hashed with bcrypt (optional for OAuth)
   name          String
   image         String?
   phone         String?
