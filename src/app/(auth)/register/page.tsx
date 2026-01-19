@@ -106,19 +106,19 @@ function RegisterForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 py-12">
+        <div className="min-h-screen flex items-center justify-center p-4 py-8">
             <div className="w-full max-w-md">
                 {/* Logo */}
-                <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+                <Link href="/" className="flex items-center justify-center gap-2 mb-6">
                     <Zap className="w-8 h-8 text-[var(--primary)]" />
                     <span className="text-2xl font-bold text-gradient">Zenith AI Academy</span>
                 </Link>
 
                 {/* Register Card */}
-                <Card className="p-8">
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold mb-2">Buat Akun Anda</h1>
-                        <p className="text-[var(--text-secondary)]">
+                <Card className="p-6">
+                    <div className="text-center mb-6">
+                        <h1 className="text-xl font-bold mb-1">Buat Akun Anda</h1>
+                        <p className="text-sm text-[var(--text-secondary)]">
                             Mulai perjalanan Anda menuju penguasaan AI
                         </p>
                     </div>
@@ -127,7 +127,7 @@ function RegisterForm() {
                         type="button"
                         onClick={handleGoogleLogin}
                         disabled={isLoading}
-                        className="w-full h-12 flex items-center justify-center gap-3 bg-white text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-medium mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full h-11 flex items-center justify-center gap-3 bg-white text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-medium mb-4 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
                         {/* Google Logo */}
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -151,19 +151,19 @@ function RegisterForm() {
                         Daftar dengan Google
                     </button>
 
-                    <div className="mb-6 flex items-center gap-4">
+                    <div className="mb-4 flex items-center gap-4">
                         <div className="flex-1 h-px bg-[var(--border-color)]" />
-                        <span className="text-sm text-[var(--text-muted)]">atau daftar dengan email</span>
+                        <span className="text-xs text-[var(--text-muted)] uppercase">atau email</span>
                         <div className="flex-1 h-px bg-[var(--border-color)]" />
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 rounded-lg bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] text-sm">
+                        <div className="mb-4 p-3 rounded-lg bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] text-sm">
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-3">
                         <Input
                             id="name"
                             name="name"
@@ -176,87 +176,83 @@ function RegisterForm() {
                             startIcon={<User className="w-5 h-5" />}
                         />
 
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            label="Alamat Email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="nama@email.com"
-                            required
-                            startIcon={<Mail className="w-5 h-5" />}
-                        />
-
-                        <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            label="Nomor Telepon"
-                            helperText="(Opsional)"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="+62 812 3456 7890"
-                            startIcon={<Phone className="w-5 h-5" />}
-                        />
-
-                        <div className="space-y-1.5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <Input
-                                id="password"
-                                name="password"
-                                type={showPassword ? 'text' : 'password'}
-                                label="Password"
-                                value={formData.password}
+                                id="email"
+                                name="email"
+                                type="email"
+                                label="Email"
+                                value={formData.email}
                                 onChange={handleChange}
-                                placeholder="••••••••"
+                                placeholder="nama@email.com"
                                 required
-                                minLength={8}
-                                helperText="Minimal 8 karakter"
-                                startIcon={<Lock className="w-5 h-5" />}
-                                endIcon={
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="hover:text-[var(--text-primary)] transition focus:outline-none"
-                                    >
-                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                    </button>
-                                }
+                                startIcon={<Mail className="w-5 h-5" />}
+                            />
+
+                            <Input
+                                id="phone"
+                                name="phone"
+                                type="tel"
+                                label="No. Telepon"
+                                helperText="(Opsional)"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                placeholder="+62..."
+                                startIcon={<Phone className="w-5 h-5" />}
                             />
                         </div>
 
-                        <div className="space-y-1.5">
-                            <Input
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                type={showPassword ? 'text' : 'password'}
-                                label="Konfirmasi Password"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="••••••••"
-                                required
-                                startIcon={<Lock className="w-5 h-5" />}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Input
+                                    id="password"
+                                    name="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    label="Password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="••••••••"
+                                    required
+                                    minLength={8}
+                                    startIcon={<Lock className="w-5 h-5" />}
+                                    endIcon={
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="hover:text-[var(--text-primary)] transition focus:outline-none"
+                                        >
+                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                        </button>
+                                    }
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type={showPassword ? 'text' : 'password'}
+                                    label="Konfirmasi" // Shortened for layout
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="••••••••"
+                                    required
+                                    startIcon={<Lock className="w-5 h-5" />}
+                                />
+                            </div>
                         </div>
 
                         <Button
                             type="submit"
                             isLoading={isLoading}
-                            className="w-full py-4 text-white"
+                            className="w-full py-3 mt-2 text-white"
                         >
                             Buat Akun
                         </Button>
                     </form>
 
-                    {/* Divider */}
-                    <div className="my-8 flex items-center gap-4">
-                        <div className="flex-1 h-px bg-[var(--border-color)]" />
-                        <span className="text-sm text-[var(--text-muted)]">atau</span>
-                        <div className="flex-1 h-px bg-[var(--border-color)]" />
-                    </div>
-
                     {/* Login Link */}
-                    <p className="text-center text-[var(--text-secondary)]">
+                    <p className="text-center text-sm text-[var(--text-secondary)] mt-6">
                         Sudah punya akun?{' '}
                         <Link href="/login" className="text-[var(--primary-light)] hover:text-[var(--primary)] font-medium transition">
                             Masuk

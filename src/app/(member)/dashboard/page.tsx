@@ -7,12 +7,7 @@ import { getLastActiveLesson } from '@/lib/user-progress';
 import { Card } from '@/components/ui/Card';
 import { buttonVariants } from '@/components/ui/Button';
 import clsx from 'clsx';
-
-const iconMap: Record<string, typeof Wrench> = {
-    wrench: Wrench,
-    briefcase: Briefcase,
-    rocket: Rocket,
-};
+import TrackCardInteractive from '@/components/learning/TrackCardInteractive';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -41,7 +36,7 @@ export default async function DashboardPage() {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-8 animate-fade-in pb-8">
             {/* Welcome Header */}
             <div>
                 <h1 className="text-3xl font-bold mb-2">
@@ -54,33 +49,33 @@ export default async function DashboardPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center">
-                        <Trophy className="w-6 h-6 text-[var(--primary)]" />
+                <Card className="p-6 flex items-center gap-5 hover:border-[var(--primary)]/30 transition-colors">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--primary)]/5 flex items-center justify-center border border-[var(--primary)]/10">
+                        <Trophy className="w-7 h-7 text-[var(--primary)]" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold">{stats.totalPoints.toLocaleString()}</p>
-                        <p className="text-sm text-[var(--text-muted)]">Total Poin</p>
+                        <p className="text-3xl font-bold leading-none mb-1">{stats.totalPoints.toLocaleString()}</p>
+                        <p className="text-sm text-[var(--text-muted)] font-medium">Total Poin</p>
                     </div>
                 </Card>
 
-                <Card className="p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[var(--warning)]/10 flex items-center justify-center">
-                        <Flame className="w-6 h-6 text-[var(--warning)]" />
+                <Card className="p-6 flex items-center gap-5 hover:border-[var(--warning)]/30 transition-colors">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--warning)]/20 to-[var(--warning)]/5 flex items-center justify-center border border-[var(--warning)]/10">
+                        <Flame className="w-7 h-7 text-[var(--warning)]" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold">{stats.streak} hari</p>
-                        <p className="text-sm text-[var(--text-muted)]">Streak Saat Ini</p>
+                        <p className="text-3xl font-bold leading-none mb-1">{stats.streak} hari</p>
+                        <p className="text-sm text-[var(--text-muted)] font-medium">Streak Saat Ini</p>
                     </div>
                 </Card>
 
-                <Card className="p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[var(--success)]/10 flex items-center justify-center">
-                        <Target className="w-6 h-6 text-[var(--success)]" />
+                <Card className="p-6 flex items-center gap-5 hover:border-[var(--success)]/30 transition-colors">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--success)]/20 to-[var(--success)]/5 flex items-center justify-center border border-[var(--success)]/10">
+                        <Target className="w-7 h-7 text-[var(--success)]" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold">#{stats.rank || '-'}</p>
-                        <p className="text-sm text-[var(--text-muted)]">Peringkat</p>
+                        <p className="text-3xl font-bold leading-none mb-1">#{stats.rank || '-'}</p>
+                        <p className="text-sm text-[var(--text-muted)] font-medium">Peringkat</p>
                     </div>
                 </Card>
             </div>
@@ -89,28 +84,34 @@ export default async function DashboardPage() {
             {lastLesson && (
                 <div>
                     <h2 className="text-xl font-bold mb-4">Lanjutkan Belajar</h2>
-                    <Card className="p-6">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center">
+                    <Card className="p-6 border-[var(--primary)]/30 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-32 bg-[var(--primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+
+                        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-center gap-5">
+                                <div className="w-16 h-16 rounded-2xl bg-[var(--surface)] border border-[var(--border-color)] flex items-center justify-center shadow-lg">
                                     <Wrench className="w-8 h-8 text-[var(--primary)]" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-[var(--primary-light)] mb-1">
-                                        {(lastLesson as any).module.track.name} • {(lastLesson as any).module.name}
-                                    </p>
-                                    <h3 className="text-lg font-bold">{lastLesson.title}</h3>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary-light)]">
+                                            {(lastLesson as any).module.track.name}
+                                        </span>
+                                        <span className="text-xs text-[var(--text-muted)]">•</span>
+                                        <span className="text-xs text-[var(--text-secondary)]">{(lastLesson as any).module.name}</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-1 group-hover:text-[var(--primary-light)] transition-colors">{lastLesson.title}</h3>
                                     <p className="text-sm text-[var(--text-muted)]">
-                                        Lesson {(lastLesson as any).orderIndex + 1}
+                                        Pelajaran {(lastLesson as any).orderIndex + 1}
                                     </p>
                                 </div>
                             </div>
                             <Link
                                 href={`/lessons/${lastLesson.id}`}
-                                className={clsx(buttonVariants.base, buttonVariants.variants.primary, buttonVariants.sizes.md)}
+                                className={clsx(buttonVariants.base, buttonVariants.variants.primary, buttonVariants.sizes.lg, "shadow-lg shadow-blue-500/20")}
                             >
-                                Lanjut
-                                <ChevronRight className="w-5 h-5" />
+                                Lanjutkan
+                                <ChevronRight className="w-5 h-5 ml-1" />
                             </Link>
                         </div>
                     </Card>
@@ -131,63 +132,9 @@ export default async function DashboardPage() {
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6">
-                    {tracks.map((track: any) => {
-                        const Icon = iconMap[track.icon] || Wrench;
-                        const color = track.slug === 'engineer' ? 'var(--primary)' : track.slug === 'entrepreneur' ? 'var(--success)' : 'var(--warning)';
-
-                        return (
-                            <Link
-                                key={track.id}
-                                href={track.isLocked ? '#' : `/tracks/${track.slug}`}
-                            >
-                                <Card className={clsx(
-                                    "p-6 group relative overflow-hidden h-full transition-all duration-300",
-                                    track.isLocked ? 'cursor-not-allowed opacity-70' : 'hover:border-blue-500/40 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]'
-                                )}>
-                                    {/* Lock Overlay */}
-                                    {track.isLocked && (
-                                        <div className="absolute inset-0 bg-[var(--background)]/60 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-[15px]">
-                                            <Lock className="w-8 h-8 text-[var(--text-muted)] mb-2" />
-                                            <p className="text-sm text-[var(--text-muted)] text-center px-4">
-                                                {track.lockReason || 'Complete previous track'}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Track Icon */}
-                                    <div
-                                        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition group-hover:scale-110"
-                                        style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)` }}
-                                    >
-                                        <Icon className="w-7 h-7" style={{ color }} />
-                                    </div>
-
-                                    {/* Track Info */}
-                                    <h3 className="text-lg font-bold mb-2">{track.name}</h3>
-                                    <p className="text-sm text-[var(--text-secondary)] mb-4 line-clamp-2">
-                                        {track.description}
-                                    </p>
-
-                                    {/* Progress */}
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[var(--text-muted)]">Progres</span>
-                                            <span className="font-medium">{track.progress}%</span>
-                                        </div>
-                                        <div className="progress-bar">
-                                            <div
-                                                className="progress-bar-fill"
-                                                style={{ width: `${track.progress}%` }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-[var(--text-muted)]">
-                                            {track.completedLessons} dari {track.totalLessons} pelajaran
-                                        </p>
-                                    </div>
-                                </Card>
-                            </Link>
-                        );
-                    })}
+                    {tracks.map((track: any) => (
+                        <TrackCardInteractive key={track.id} track={track} />
+                    ))}
                 </div>
             </div>
         </div>
