@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X, CheckSquare, Type, List, AlignLeft, CheckCircle } from 'lucide-react';
+
+type QuestionType = 'MULTIPLE_CHOICE' | 'DROPDOWN' | 'CHECKBOXES' | 'SHORT_ANSWER' | 'PARAGRAPH';
 
 interface Question {
     id: string;
+    type: QuestionType;
     text: string;
-    options: string[];
-    correctAnswer: number; // Index of correct option
+    options?: string[]; // For MC, Dropdown, Checkboxes
+    correctAnswer?: number | number[] | string; // Index, Indices, or Text
 }
 
 interface QuizEditorProps {
@@ -33,7 +36,14 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
         try {
             const parsed = JSON.parse(value);
             if (parsed.type === 'quiz' && Array.isArray(parsed.questions)) {
-                setQuestions(parsed.questions);
+                // Migrate legacy questions
+                const migratedQuestions = parsed.questions.map((q: any) => ({
+                    ...q,
+                    type: q.type || 'MULTIPLE_CHOICE',
+                    options: q.options || [],
+                    // Ensure correctAnswer is preserved
+                }));
+                setQuestions(migratedQuestions);
                 hasLoadedRef.current = true;
                 isInitializedRef.current = true;
             }
@@ -58,6 +68,7 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
     const addQuestion = () => {
         const newQuestion: Question = {
             id: Date.now().toString(),
+            type: 'MULTIPLE_CHOICE',
             text: '',
             options: ['', ''],
             correctAnswer: 0
@@ -71,55 +82,107 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
         setQuestions(newQuestions);
     };
 
+    const updateQuestionType = (index: number, type: QuestionType) => {
+        const newQuestions = [...questions];
+        const q = newQuestions[index];
+
+        q.type = type;
+
+        // Reset fields based on type
+        if (type === 'SHORT_ANSWER' || type === 'PARAGRAPH') {
+            q.options = undefined;
+            q.correctAnswer = '';
+        } else if (type === 'CHECKBOXES') {
+            q.options = q.options || ['', ''];
+            q.correctAnswer = [0]; // Default to first option correct
+        } else {
+            // MC or Dropdown
+            q.options = q.options || ['', ''];
+            q.correctAnswer = 0;
+        }
+
+        setQuestions(newQuestions);
+    };
+
     const updateQuestionText = (index: number, text: string) => {
         const newQuestions = [...questions];
         newQuestions[index] = { ...newQuestions[index], text };
         setQuestions(newQuestions);
     };
 
+    // Options Management
     const addOption = (qIndex: number) => {
         const newQuestions = [...questions];
-        newQuestions[qIndex] = {
-            ...newQuestions[qIndex],
-            options: [...newQuestions[qIndex].options, '']
-        };
+        const q = newQuestions[qIndex];
+        if (!q.options) q.options = [];
+
+        q.options.push('');
         setQuestions(newQuestions);
     };
 
     const removeOption = (qIndex: number, oIndex: number) => {
         const newQuestions = [...questions];
-        // Don't allow less than 2 options
-        if (newQuestions[qIndex].options.length <= 2) return;
+        const q = newQuestions[qIndex];
+        if (!q.options || q.options.length <= 2) return;
 
-        const newOptions = [...newQuestions[qIndex].options];
-        newOptions.splice(oIndex, 1);
+        q.options.splice(oIndex, 1);
 
-        // Adjust correct answer index if needed
-        let newCorrectAnswer = newQuestions[qIndex].correctAnswer;
-        if (newCorrectAnswer >= oIndex) {
-            newCorrectAnswer = Math.max(0, newCorrectAnswer - 1);
+        // Adjust correct answers
+        if (Array.isArray(q.correctAnswer)) {
+            // Filter out the removed index and shift others
+            q.correctAnswer = q.correctAnswer
+                .filter(idx => idx !== oIndex)
+                .map(idx => (idx > oIndex ? idx - 1 : idx));
+        } else if (typeof q.correctAnswer === 'number') {
+            if (q.correctAnswer === oIndex) q.correctAnswer = 0;
+            else if (q.correctAnswer > oIndex) q.correctAnswer--;
         }
 
-        newQuestions[qIndex] = {
-            ...newQuestions[qIndex],
-            options: newOptions,
-            correctAnswer: newCorrectAnswer
-        };
         setQuestions(newQuestions);
     };
 
     const updateOptionText = (qIndex: number, oIndex: number, text: string) => {
         const newQuestions = [...questions];
-        const newOptions = [...newQuestions[qIndex].options];
-        newOptions[oIndex] = text;
-        newQuestions[qIndex] = { ...newQuestions[qIndex], options: newOptions };
+        const q = newQuestions[qIndex];
+        if (q.options) {
+            q.options[oIndex] = text;
+            setQuestions(newQuestions);
+        }
+    };
+
+    // Correct Answer Logic
+    const setCorrectAnswer = (qIndex: number, value: any) => {
+        const newQuestions = [...questions];
+        newQuestions[qIndex] = { ...newQuestions[qIndex], correctAnswer: value };
         setQuestions(newQuestions);
     };
 
-    const setCorrectAnswer = (qIndex: number, oIndex: number) => {
+    const toggleCorrectOption = (qIndex: number, oIndex: number) => {
         const newQuestions = [...questions];
-        newQuestions[qIndex] = { ...newQuestions[qIndex], correctAnswer: oIndex };
+        const q = newQuestions[qIndex];
+
+        if (Array.isArray(q.correctAnswer)) {
+            if (q.correctAnswer.includes(oIndex)) {
+                // Prevent removing the last correct option
+                if (q.correctAnswer.length > 1) {
+                    q.correctAnswer = q.correctAnswer.filter(idx => idx !== oIndex);
+                }
+            } else {
+                q.correctAnswer = [...q.correctAnswer, oIndex].sort();
+            }
+        }
         setQuestions(newQuestions);
+    };
+
+    const getIconForType = (type: QuestionType) => {
+        switch (type) {
+            case 'MULTIPLE_CHOICE': return <List className="w-4 h-4" />;
+            case 'CHECKBOXES': return <CheckSquare className="w-4 h-4" />;
+            case 'DROPDOWN': return <AlignLeft className="w-4 h-4" />; // Approximate icon
+            case 'SHORT_ANSWER': return <Type className="w-4 h-4" />;
+            case 'PARAGRAPH': return <AlignLeft className="w-4 h-4" />;
+            default: return <List className="w-4 h-4" />;
+        }
     };
 
     return (
@@ -135,52 +198,104 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
                             <span className="bg-[var(--primary)]/10 text-[var(--primary)] px-2 py-1 rounded text-xs font-bold mt-1">
                                 Q{qIndex + 1}
                             </span>
-                            <div className="flex-1">
-                                <input
-                                    type="text"
-                                    placeholder="Enter question text..."
-                                    className="input-field w-full mb-2"
-                                    value={q.text}
-                                    onChange={(e) => updateQuestionText(qIndex, e.target.value)}
-                                />
-
-                                <div className="space-y-2 pl-2 border-l-2 border-[var(--border-color)]">
-                                    {q.options.map((opt, oIndex) => (
-                                        <div key={oIndex} className="flex items-center gap-2">
-                                            <input
-                                                type="radio"
-                                                name={`correct-${q.id}`}
-                                                checked={q.correctAnswer === oIndex}
-                                                onChange={() => setCorrectAnswer(qIndex, oIndex)}
-                                                className="w-4 h-4 text-[var(--primary)]"
-                                                title="Mark as correct answer"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder={`Option ${oIndex + 1}`}
-                                                className="input-field flex-1 text-sm py-1"
-                                                value={opt}
-                                                onChange={(e) => updateOptionText(qIndex, oIndex, e.target.value)}
-                                            />
-                                            {q.options.length > 2 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeOption(qIndex, oIndex)}
-                                                    className="p-1 text-[var(--text-muted)] hover:text-red-500"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <button
-                                        type="button"
-                                        onClick={() => addOption(qIndex)}
-                                        className="text-xs text-[var(--primary)] hover:underline flex items-center gap-1 mt-2"
+                            <div className="flex-1 space-y-4">
+                                {/* Question Header: Text & Type */}
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <input
+                                        type="text"
+                                        placeholder="Enter question text..."
+                                        className="input-field flex-1"
+                                        value={q.text}
+                                        onChange={(e) => updateQuestionText(qIndex, e.target.value)}
+                                    />
+                                    <select
+                                        className="input-field w-full sm:w-48 text-sm"
+                                        value={q.type}
+                                        onChange={(e) => updateQuestionType(qIndex, e.target.value as QuestionType)}
                                     >
-                                        <Plus className="w-3 h-3" /> Add Option
-                                    </button>
+                                        <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                                        <option value="CHECKBOXES">Checkboxes (Multi)</option>
+                                        <option value="DROPDOWN">Dropdown</option>
+                                        <option value="SHORT_ANSWER">Short Answer</option>
+                                        <option value="PARAGRAPH">Paragraph</option>
+                                    </select>
                                 </div>
+
+                                {/* Options Editor (MC, Checkbox, Dropdown) */}
+                                {['MULTIPLE_CHOICE', 'CHECKBOXES', 'DROPDOWN'].includes(q.type) && (
+                                    <div className="space-y-2 pl-2 border-l-2 border-[var(--border-color)]">
+                                        <p className="text-xs text-[var(--text-muted)] mb-2">Options (Mark correct answers)</p>
+                                        {q.options?.map((opt, oIndex) => (
+                                            <div key={oIndex} className="flex items-center gap-2">
+                                                {q.type === 'CHECKBOXES' ? (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(q.correctAnswer as number[])?.includes(oIndex)}
+                                                        onChange={() => toggleCorrectOption(qIndex, oIndex)}
+                                                        className="w-4 h-4 text-[var(--primary)] rounded focus:ring-[var(--primary)]"
+                                                        title="Mark as correct option"
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        type="radio"
+                                                        name={`correct-${q.id}`}
+                                                        checked={q.correctAnswer === oIndex}
+                                                        onChange={() => setCorrectAnswer(qIndex, oIndex)}
+                                                        className="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]"
+                                                        title="Mark as correct option"
+                                                    />
+                                                )}
+
+                                                <input
+                                                    type="text"
+                                                    placeholder={`Option ${oIndex + 1}`}
+                                                    className="input-field flex-1 text-sm py-1"
+                                                    value={opt}
+                                                    onChange={(e) => updateOptionText(qIndex, oIndex, e.target.value)}
+                                                />
+                                                {(q.options?.length || 0) > 2 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeOption(qIndex, oIndex)}
+                                                        className="p-1 text-[var(--text-muted)] hover:text-red-500"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => addOption(qIndex)}
+                                            className="text-xs text-[var(--primary)] hover:underline flex items-center gap-1 mt-2"
+                                        >
+                                            <Plus className="w-3 h-3" /> Add Option
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Text Answer Editor */}
+                                {q.type === 'SHORT_ANSWER' && (
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-[var(--text-muted)]">Correct Answer (Exact text)</p>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter the correct answer..."
+                                            className="input-field w-full"
+                                            value={q.correctAnswer as string || ''}
+                                            onChange={(e) => setCorrectAnswer(qIndex, e.target.value)}
+                                        />
+                                    </div>
+                                )}
+
+                                {q.type === 'PARAGRAPH' && (
+                                    <div className="p-3 bg-blue-500/10 rounded-lg text-sm text-[var(--text-secondary)]">
+                                        <p className="flex items-center gap-2">
+                                            <CheckCircle className="w-4 h-4 text-blue-400" />
+                                            Paragraph answers are automatically marked correct if the student provides a response (participation based).
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                             <button
                                 type="button"
