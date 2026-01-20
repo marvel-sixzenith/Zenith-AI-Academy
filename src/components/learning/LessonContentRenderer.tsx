@@ -35,6 +35,7 @@ export default function LessonContentRenderer({
             return (
                 <PdfViewer
                     url={contentData.file_url || contentData.pdf_url || contentData.url}
+                    title={lessonTitle}
                 />
             );
 
