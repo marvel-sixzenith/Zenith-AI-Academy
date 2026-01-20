@@ -34,7 +34,18 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
     const [isCompleting, setIsCompleting] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
 
-    const currentQuestion = data.questions[currentQuestionIndex];
+    const currentQuestion = data?.questions?.[currentQuestionIndex];
+
+    if (!data?.questions || data.questions.length === 0) {
+        return (
+            <div className="glass-card p-6 flex flex-col items-center justify-center text-center">
+                <Target className="w-12 h-12 text-[var(--text-muted)] mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Quiz Under Construction</h3>
+                <p className="text-[var(--text-secondary)]">This quiz has no questions yet. Please check back later.</p>
+            </div>
+        );
+    }
+
     const questionText = currentQuestion?.question || currentQuestion?.text || 'Question';
     const isLastQuestion = currentQuestionIndex === data.questions.length - 1;
     const progressPercent = ((currentQuestionIndex + 1) / data.questions.length) * 100;
