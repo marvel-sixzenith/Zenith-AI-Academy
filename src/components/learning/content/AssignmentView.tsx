@@ -1,6 +1,8 @@
 'use client';
 
 import { ClipboardList, CheckSquare, FileText, Download } from 'lucide-react';
+import AssignmentUploader from './AssignmentUploader';
+import { useRouter } from 'next/navigation';
 
 interface AssignmentViewProps {
     data: {
@@ -9,10 +11,17 @@ interface AssignmentViewProps {
         checklist?: string[];
         attachment?: string;
     };
+    lessonId: string;
+    currentSubmission?: any;
 }
 
-export default function AssignmentView({ data }: AssignmentViewProps) {
+export default function AssignmentView({ data, lessonId, currentSubmission }: AssignmentViewProps) {
+    const router = useRouter();
     const content = data.description || data.instructions || '';
+
+    const handleUploadComplete = () => {
+        router.refresh(); // Refresh to update completion status and show submission success state
+    };
 
     return (
         <div className="space-y-6">
@@ -81,10 +90,13 @@ export default function AssignmentView({ data }: AssignmentViewProps) {
                 )}
             </div>
 
-            <div className="p-4 rounded-lg bg-[var(--primary)]/5 border border-[var(--primary)]/10 text-center">
-                <p className="text-sm text-[var(--text-secondary)]">
-                    When you are done, mark this lesson as <strong>Complete</strong> to proceed.
-                </p>
+            {/* Submission Section */}
+            <div>
+                <AssignmentUploader
+                    lessonId={lessonId}
+                    onComplete={handleUploadComplete}
+                    currentSubmission={currentSubmission}
+                />
             </div>
         </div>
     );

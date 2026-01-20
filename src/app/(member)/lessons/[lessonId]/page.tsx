@@ -92,6 +92,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             lessonId={lesson.id}
                             lessonTitle={lesson.title}
                             isPreviewMode={isAdmin}
+                            currentSubmission={lesson.currentSubmission}
                         />
                     </div>
 

@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { ChevronLeft, Mail, Phone, Calendar, Clock, Trophy, Flame, PlayCircle, MoreHorizontal, Shield, Ban } from 'lucide-react';
 import Link from 'next/link';
+import UserActionButtons from '@/components/admin/UserActionButtons';
+import UserLearningHistory from '@/components/admin/UserLearningHistory';
 
 interface UserDetailPageProps {
     params: Promise<{ userId: string }>;
@@ -24,15 +26,26 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                 orderBy: { updatedAt: 'desc' },
                 include: {
                     lesson: {
-                        select: { id: true, title: true, pointsValue: true }
+                        select: {
+                            id: true,
+                            title: true,
+                            pointsValue: true,
+                            contentType: true
+                        }
                     }
                 }
             },
             pointHistory: {
                 orderBy: { createdAt: 'desc' },
                 take: 10
-            }
-        }
+            },
+            // Fetch separate submissions as they might not be directly linked to UserProgress in a simple way
+            // or we want details
+            quizSubmissions: {
+                include: { answers: true }
+            },
+            assignmentSubmissions: true
+        } as any // Cast to any to avoid TS error with stale Prisma types
     });
 
     if (!user) {
@@ -46,8 +59,11 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         );
     }
 
+    // Cast user to any to bypass stale Prisma types for new fields
+    const typedUser = user as any;
+
     const totalLessons = await prisma.lesson.count({ where: { status: 'PUBLISHED' } });
-    const completedLessons = user.progress.filter(p => p.status === 'COMPLETED').length;
+    const completedLessons = typedUser.progress.filter((p: any) => p.status === 'COMPLETED').length;
     const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
     const formatDate = (date: Date) => {
@@ -57,6 +73,22 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             year: 'numeric'
         }).format(new Date(date));
     };
+
+    // Merge progress with submission details
+    const historyWithDetails = typedUser.progress.map((p: any) => {
+        // Find matching submission
+        const quizSub = typedUser.quizSubmissions?.find((q: any) => q.lessonId === p.lessonId);
+        // Sort assignments by date desc and take first? Or just match by lessonId
+        const assignmentSub = typedUser.assignmentSubmissions
+            ?.filter((a: any) => a.lessonId === p.lessonId)
+            .sort((a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0];
+
+        return {
+            ...p,
+            quizSubmission: quizSub,
+            assignmentSubmission: assignmentSub
+        };
+    });
 
     return (
         <div className="space-y-8 animate-fade-in pb-10">
@@ -76,8 +108,14 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
                 {/* Left Column: Profile Card */}
                 <div className="space-y-6">
-                    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center">
-                        <div className="w-24 h-24 rounded-full bg-[var(--background-secondary)] mx-auto mb-4 relative overflow-hidden border-2 border-[var(--border-color)]">
+                    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center relative overflow-hidden">
+                        {user.banned && (
+                            <div className="absolute top-0 left-0 w-full bg-red-500/10 text-red-500 text-xs font-bold py-1 uppercase tracking-widest">
+                                Banned
+                            </div>
+                        )}
+
+                        <div className="w-24 h-24 rounded-full bg-[var(--background-secondary)] mx-auto mb-4 relative overflow-hidden border-2 border-[var(--border-color)] mt-4">
                             {user.image ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
@@ -88,24 +126,20 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                             )}
                         </div>
                         <h2 className="text-xl font-bold mb-1">{user.name}</h2>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${user.role === 'ADMIN'
+                        <div className="flex justify-center gap-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${user.role === 'ADMIN'
                                 ? 'bg-emerald-500/10 text-emerald-500'
                                 : 'bg-blue-500/10 text-blue-500'
-                            }`}>
-                            {user.role}
-                        </span>
-
-                        <div className="mt-6 flex justify-center gap-3">
-                            <button className="p-2 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-secondary)]/80 transition" title="Email User">
-                                <Mail className="w-4 h-4" />
-                            </button>
-                            <button className="p-2 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-secondary)]/80 transition" title="Edit Role">
-                                <Shield className="w-4 h-4" />
-                            </button>
-                            <button className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition" title="Ban User">
-                                <Ban className="w-4 h-4" />
-                            </button>
+                                }`}>
+                                {user.role}
+                            </span>
                         </div>
+
+                        <UserActionButtons
+                            userId={user.id}
+                            email={user.email}
+                            isBanned={!!(user as any).banned}
+                        />
                     </div>
 
                     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm space-y-4">
@@ -164,31 +198,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                     </div>
 
                     {/* Recent Progress */}
-                    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4">Learning History</h3>
-
-                        {user.progress.length > 0 ? (
-                            <div className="space-y-4">
-                                {user.progress.map((item) => (
-                                    <div key={item.id} className="flex items-center justify-between p-4 bg-[var(--background-secondary)]/30 rounded-xl">
-                                        <div>
-                                            <p className="font-medium">{item.lesson.title}</p>
-                                            <p className="text-xs text-[var(--text-muted)]">
-                                                {item.status === 'COMPLETED' ? 'Completed' : 'In Progress'} on {formatDate(item.updatedAt)}
-                                            </p>
-                                        </div>
-                                        {item.status === 'COMPLETED' && (
-                                            <span className="text-xs font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-lg">
-                                                +{item.lesson.pointsValue} pts
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-[var(--text-muted)] text-center py-8">No learning activity yet.</p>
-                        )}
-                    </div>
+                    <UserLearningHistory history={historyWithDetails as any} />
                 </div>
             </div>
         </div>

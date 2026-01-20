@@ -21,6 +21,7 @@ model User {
   phone         String?
   role          String    @default("MEMBER")
   points        Int       @default(0)
+  banned        Boolean   @default(false)
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   lastActiveAt  DateTime  @default(now())
@@ -38,6 +39,8 @@ model User {
   badges       UserBadge[]
   sessions     Session[]
   accounts     Account[]
+  quizSubmissions QuizSubmission[]
+  assignmentSubmissions AssignmentSubmission[]
 }
 
 model Account {
@@ -123,7 +126,9 @@ model Lesson {
 
   // Relations
   module   Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress UserProgress[]
+  progress   UserProgress[]
+  quizSubmissions QuizSubmission[]
+  assignmentSubmissions AssignmentSubmission[]
 }
 
 model UserProgress {
@@ -141,6 +146,46 @@ model UserProgress {
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
+}
+
+model QuizSubmission {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  score       Int
+  totalQuestions Int
+  completedAt DateTime  @default(now())
+
+  // Relations
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson  Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+}
+
+model QuizAnswer {
+  id               String         @id @default(cuid())
+  quizSubmissionId String
+  questionId       String
+  questionText     String // Store text in case quiz changes
+  selectedOption   String // Or JSON string for multiple choice
+  isCorrect        Boolean
+
+  // Relations
+  submission QuizSubmission @relation(fields: [quizSubmissionId], references: [id], onDelete: Cascade)
+}
+
+model AssignmentSubmission {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  fileUrl     String
+  fileName    String?
+  submittedAt DateTime  @default(now())
+  status      String    @default("SUBMITTED") // SUBMITTED, REVIEWED
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
 
 // ============ GAMIFICATION ============

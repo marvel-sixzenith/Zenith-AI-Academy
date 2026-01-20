@@ -18,8 +18,13 @@ export async function getLessonById(id: string, userId?: string) {
             progress: userId ? {
                 where: { userId },
             } : false,
+            assignmentSubmissions: userId ? {
+                where: { userId },
+                orderBy: { submittedAt: 'desc' },
+                take: 1
+            } : false,
         },
-    });
+    }) as any; // Temporary cast to avoid complex Prisma return type issues with conditional includes
 
     if (!lesson) {
         return null;
@@ -33,6 +38,9 @@ export async function getLessonById(id: string, userId?: string) {
     const rawProgress = (lesson as any).progress?.[0] || null;
     let userStatus = rawProgress?.status || 'LOCKED';
 
+    // Parse assignment submission
+    const currentSubmission = (lesson as any).assignmentSubmissions?.[0] || null;
+
     // Special handling for Video->Quiz conversion (same as in tracks.ts)
     if (lesson.contentType === 'QUIZ' && userStatus === 'COMPLETED' && (rawProgress?.quizScore === null || rawProgress?.quizScore === undefined)) {
         userStatus = 'UNLOCKED';
@@ -42,6 +50,7 @@ export async function getLessonById(id: string, userId?: string) {
         ...lesson,
         contentData: parseContentData(lesson.contentData),
         userProgress: rawProgress ? { ...rawProgress, status: userStatus } : null,
+        currentSubmission
     };
 
     // Find prev/next lessons

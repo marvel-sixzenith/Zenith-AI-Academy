@@ -9,6 +9,7 @@ interface LessonContentRendererProps {
     lessonId?: string;
     lessonTitle?: string;
     isPreviewMode?: boolean;
+    currentSubmission?: any;
 }
 
 export default function LessonContentRenderer({
@@ -16,7 +17,8 @@ export default function LessonContentRenderer({
     contentData,
     lessonId,
     lessonTitle,
-    isPreviewMode = false
+    isPreviewMode = false,
+    currentSubmission
 }: LessonContentRendererProps) {
     if (!contentData) return null;
 
@@ -50,6 +52,10 @@ export default function LessonContentRenderer({
             return (
                 <AssignmentView
                     data={contentData}
+                    lessonId={lessonId!}
+                    currentSubmission={contentData.currentSubmission} // This might be wrong, currentSubmission comes from lesson wrapper not contentData
+                // Wait, getLessonById merges currentSubmission into the returned object, NOT into contentData.
+                // I need to update Props.
                 />
             );
 

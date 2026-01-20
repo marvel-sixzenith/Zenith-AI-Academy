@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Readable } from 'stream';
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -48,6 +49,28 @@ export async function uploadFile(
     } catch (error) {
         console.error('Error uploading file to R2:', error);
         throw new Error('Failed to upload file');
+    }
+}
+
+export async function getPresignedUploadUrl(
+    fileName: string,
+    contentType: string
+): Promise<{ uploadUrl: string; fileUrl: string }> {
+    const command = new PutObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: fileName,
+        ContentType: contentType,
+    });
+
+    try {
+        const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+        return {
+            uploadUrl,
+            fileUrl: `/api/files/${fileName}`
+        };
+    } catch (error) {
+        console.error('Error generating presigned URL:', error);
+        throw new Error('Failed to generate upload URL');
     }
 }
 
