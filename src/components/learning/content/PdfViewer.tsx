@@ -43,9 +43,10 @@ export default function PdfViewer({ url, title }: { url: string, title?: string 
                 </div>
             </div>
 
-            <div className="glass-card p-2 overflow-hidden h-[85vh] min-h-[600px] bg-[var(--surface)]">
+            {/* Added resize-y to allow user to adjust height if needed */}
+            <div className="glass-card p-2 overflow-hidden h-[85vh] min-h-[600px] bg-[var(--surface)] resize-y">
                 <iframe
-                    src={`${url}#toolbar=0&view=FitH`}
+                    src={`${url}#toolbar=1&view=FitH`}
                     className="w-full h-full rounded-xl bg-white"
                     title="PDF Viewer"
                 />
