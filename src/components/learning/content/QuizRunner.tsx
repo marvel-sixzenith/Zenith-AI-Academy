@@ -116,6 +116,8 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
 
         finalAnswers.forEach((userAns, index) => {
             const q = questions[index];
+            if (!q) return; // Safety check
+
             const qType = q.type || 'MULTIPLE_CHOICE';
             const correctAns = q.correctAnswer;
 
@@ -214,7 +216,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
             case 'MULTIPLE_CHOICE':
                 return (
                     <div className="space-y-3">
-                        {options.map((option, index) => {
+                        {Array.isArray(options) && options.map((option, index) => {
                             const isSelected = currentAnswer === index;
                             const optionLetter = String.fromCharCode(65 + index);
                             return (
