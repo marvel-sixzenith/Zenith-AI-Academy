@@ -129,53 +129,59 @@ export function AvatarUpload({ currentImage, userName }: AvatarUploadProps) {
                 className="relative group w-32 h-32 mx-auto cursor-pointer"
                 onClick={() => setShowMenu(!showMenu)}
             >
-                <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--background)] shadow-xl bg-[var(--card)] transition-transform hover:scale-105">
+                <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--background-secondary)] shadow-2xl ring-2 ring-[var(--border-color)] group-hover:ring-blue-500/50 transition-all duration-300">
                     {currentImage ? (
                         <Image
                             src={currentImage}
                             alt={userName}
                             fill
-                            className="object-cover"
+                            className="object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-800 text-gray-400">
+                        <div className="w-full h-full flex items-center justify-center bg-[#1e293b] text-gray-400 group-hover:text-blue-400 transition-colors">
                             <UserIcon className="w-12 h-12" />
                         </div>
                     )}
 
                     {/* Loading Overlay */}
                     {(isUploading || isDeleting) && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-                            <Loader2 className="w-8 h-8 text-white animate-spin" />
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 backdrop-blur-sm">
+                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                         </div>
                     )}
 
                     {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Camera className="w-8 h-8 text-white" />
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-1">
+                        <Camera className="w-6 h-6 text-white drop-shadow-lg" />
+                        <span className="text-[10px] font-medium text-white/90 uppercase tracking-wider">Edit</span>
                     </div>
                 </div>
             </div>
 
             {/* Dropdown Menu */}
             {showMenu && (
-                <div ref={menuRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-[var(--card)] border border-[var(--border-color)] rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-20">
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] transition-colors text-left"
-                    >
-                        <Upload className="w-4 h-4" />
-                        Ubah Foto
-                    </button>
-                    {currentImage && (
+                <div
+                    ref={menuRef}
+                    className="absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-48 bg-[#111118] border border-[var(--border-color)] rounded-xl shadow-2xl shadow-black/50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50"
+                >
+                    <div className="p-1">
                         <button
-                            onClick={handleDelete}
-                            className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[var(--error)]/10 hover:text-[var(--error)] transition-colors text-left text-[var(--error)]"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-blue-500/10 hover:text-blue-400 transition-colors text-left text-gray-300"
                         >
-                            <Trash2 className="w-4 h-4" />
-                            Hapus Foto
+                            <Upload className="w-4 h-4" />
+                            Ubah Foto
                         </button>
-                    )}
+                        {currentImage && (
+                            <button
+                                onClick={handleDelete}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors text-left text-red-400/90"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Hapus Foto
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
 

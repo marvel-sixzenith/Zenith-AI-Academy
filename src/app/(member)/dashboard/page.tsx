@@ -37,10 +37,23 @@ export default async function DashboardPage() {
     // Get last active lesson
     const lastLesson = await getLastActiveLesson(userId);
 
+    // Calculate Rank (Count users with more points)
+    const higherRankUsersCount = await prisma.user.count({
+        where: {
+            points: {
+                gt: userPoints
+            },
+            role: 'MEMBER' // Only compare against other members
+        }
+    });
+
+    // Rank is the count of people above you + 1
+    const currentRank = higherRankUsersCount + 1;
+
     const stats = {
         totalPoints: userPoints,
         streak: currentStreak,
-        rank: 0,  // TODO: Implement leaderboard
+        rank: currentRank,
     };
 
     return (

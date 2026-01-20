@@ -75,10 +75,10 @@ export async function getLastActiveLesson(userId: string) {
             return nextLesson;
         } else {
             // Track finished? Or Module finished? 
-            // Maybe return the same lesson but with completed status? 
-            // Or find the next track?
-            // For now, let's just return the current completed lesson, user can see they finished it.
-            return currentLesson;
+            // If there is no next lesson and the current one is completed, 
+            // the user has finished the content for this track.
+            // logic: return null to hide "Continue Learning" section on dashboard.
+            return null;
         }
     }
 
