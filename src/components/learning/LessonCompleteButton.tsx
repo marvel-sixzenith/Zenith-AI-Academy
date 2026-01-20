@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -52,16 +53,16 @@ export default function LessonCompleteButton({ lessonId, lessonTitle, contentTyp
                 <span>Mark as Complete</span>
             </button>
 
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {showModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     {/* Backdrop with blur and darken */}
                     <div
-                        className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300 animate-fade-in"
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
                         onClick={() => !isSubmitting && setShowModal(false)}
                     />
 
                     {/* Modal Content */}
-                    <div className="relative bg-[#0f172a] border border-blue-500/20 rounded-2xl p-8 max-w-md w-full animate-slide-up flex flex-col items-center text-center shadow-2xl shadow-black/80">
+                    <div className="relative bg-[#0f172a] border border-blue-500/20 rounded-2xl p-8 max-w-md w-full animate-slide-up flex flex-col items-center text-center shadow-2xl shadow-black/80 z-10">
 
                         {/* Glowing Icon Header */}
                         <div className="mb-6 relative">
@@ -114,7 +115,8 @@ export default function LessonCompleteButton({ lessonId, lessonTitle, contentTyp
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );
