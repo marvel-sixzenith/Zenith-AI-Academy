@@ -30,10 +30,18 @@ export async function getLessonById(id: string, userId?: string) {
     }
 
     // Parse content data
+    const rawProgress = (lesson as any).progress?.[0] || null;
+    let userStatus = rawProgress?.status || 'LOCKED';
+
+    // Special handling for Video->Quiz conversion (same as in tracks.ts)
+    if (lesson.contentType === 'QUIZ' && userStatus === 'COMPLETED' && (rawProgress?.quizScore === null || rawProgress?.quizScore === undefined)) {
+        userStatus = 'UNLOCKED';
+    }
+
     const lessonWithParsedData = {
         ...lesson,
         contentData: parseContentData(lesson.contentData),
-        userProgress: (lesson as any).progress?.[0] || null,
+        userProgress: rawProgress ? { ...rawProgress, status: userStatus } : null,
     };
 
     // Find prev/next lessons

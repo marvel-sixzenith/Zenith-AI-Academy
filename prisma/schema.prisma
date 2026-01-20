@@ -24,6 +24,7 @@ model User {
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   lastActiveAt  DateTime  @default(now())
+  lastNotificationCheck DateTime @default(now())
 
   // Relations
   progress     UserProgress[]

@@ -17,6 +17,7 @@ import {
     Trophy,
     Settings
 } from 'lucide-react';
+import NotificationDropdown from './NotificationDropdown';
 
 interface TopNavProps {
     user: {
@@ -78,10 +79,7 @@ export default function TopNav({ user }: TopNavProps) {
                     {/* Right Section */}
                     <div className="flex items-center gap-2">
                         {/* Notifications */}
-                        <button className="p-2 rounded-lg hover:bg-[var(--background-card)] text-[var(--text-secondary)] relative">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--primary)]" />
-                        </button>
+                        <NotificationDropdown />
 
                         {/* Profile Dropdown */}
                         <div className="relative">

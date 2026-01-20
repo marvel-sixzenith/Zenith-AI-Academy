@@ -117,7 +117,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
                                     contentType={lesson.contentType}
                                 />
                             )}
-                            {navigation.next && (
+                            {/* Only show Next Lesson button if current lesson is completed or if admin */}
+                            {navigation.next && (isCompleted || isAdmin) && (
                                 <Link
                                     href={`/lessons/${navigation.next.id}`}
                                     className="btn-primary"

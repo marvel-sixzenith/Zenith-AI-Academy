@@ -88,10 +88,17 @@ export default function TrackCardInteractive({ track }: TrackCardProps) {
             )}>
                 <div className="space-y-2 mb-4">
                     {previewItems.map((item: any, idx: number) => (
-                        <div key={item.id} className="flex items-center gap-2 text-sm text-[var(--text-secondary)] py-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] shrink-0" />
-                            <span className="truncate flex-1">{item.title}</span>
-                        </div>
+                        <Link
+                            key={item.id}
+                            href={`/lessons/${item.id}`}
+                            className="block group/item"
+                        >
+                            <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] py-1 group-hover/item:text-[var(--primary)] transition-colors">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] shrink-0 group-hover/item:scale-125 transition-transform" />
+                                <span className="truncate flex-1">{item.title}</span>
+                                <ChevronRight className="w-3 h-3 opacity-0 group-hover/item:opacity-100 -translate-x-2 group-hover/item:translate-x-0 transition-all" />
+                            </div>
+                        </Link>
                     ))}
                     {track.totalLessons > 5 && (
                         <p className="text-xs text-[var(--text-muted)] pl-4">... dan {track.totalLessons - 5} lainnya</p>
