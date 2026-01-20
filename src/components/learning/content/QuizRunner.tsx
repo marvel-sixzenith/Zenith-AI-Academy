@@ -207,6 +207,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
     // --- RENDER HELPERS ---
 
     const renderInput = () => {
+        if (!currentQuestion) return <div>Error: Question data missing</div>;
         const options = currentQuestion.options || [];
 
         switch (currentType) {
@@ -459,7 +460,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                             {currentType === 'MULTIPLE_CHOICE' ? (
                                 <>
                                     <kbd className="px-2 py-1 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-color)] font-mono text-xs">
-                                        1-{currentQuestion.options?.length}
+                                        1-{currentQuestion?.options?.length}
                                     </kbd>
                                     <span>to select</span>
                                 </>
