@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Eye, CheckCircle, XCircle, FileText, Download, X } from 'lucide-react';
 
 interface LearningHistoryItem {
@@ -91,13 +92,15 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
             </div>
 
             {/* Modal */}
-            {selectedItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={closeModal}>
+            {selectedItem && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={closeModal} />
+
                     <div
-                        className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                        className="relative bg-[#0f172a] border border-[var(--border-color)] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-slide-up z-10"
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
+                        <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)] bg-[#0f172a]">
                             <div>
                                 <h3 className="text-xl font-bold">{selectedItem.lesson.title}</h3>
                                 <p className="text-sm text-[var(--text-muted)]">Submission Details</p>
@@ -107,7 +110,7 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                             </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto">
+                        <div className="p-6 overflow-y-auto bg-[#0f172a]">
                             {selectedItem.quizSubmission && (
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-4 mb-4">
@@ -121,21 +124,25 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                                     </div>
 
                                     <div className="space-y-4">
-                                        {selectedItem.quizSubmission.answers.map((answer, idx) => (
-                                            <div key={idx} className={`p-4 rounded-xl border ${answer.isCorrect ? 'border-green-500/20 bg-green-500/5' : 'border-red-500/20 bg-red-500/5'}`}>
-                                                <p className="font-medium mb-2">{idx + 1}. {answer.questionText}</p>
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <span className="text-[var(--text-secondary)]">
-                                                        Selected: <strong className={answer.isCorrect ? 'text-green-500' : 'text-red-500'}>{answer.selectedOption}</strong>
-                                                    </span>
-                                                    {answer.isCorrect ? (
-                                                        <CheckCircle className="w-5 h-5 text-green-500" />
-                                                    ) : (
-                                                        <XCircle className="w-5 h-5 text-red-500" />
-                                                    )}
+                                        {selectedItem.quizSubmission.answers && selectedItem.quizSubmission.answers.length > 0 ? (
+                                            selectedItem.quizSubmission.answers.map((answer, idx) => (
+                                                <div key={idx} className={`p-4 rounded-xl border ${answer.isCorrect ? 'border-green-500/20 bg-green-500/5' : 'border-red-500/20 bg-red-500/5'}`}>
+                                                    <p className="font-medium mb-2">{idx + 1}. {answer.questionText}</p>
+                                                    <div className="flex items-center justify-between text-sm">
+                                                        <span className="text-[var(--text-secondary)]">
+                                                            Selected: <strong className={answer.isCorrect ? 'text-green-500' : 'text-red-500'}>{answer.selectedOption}</strong>
+                                                        </span>
+                                                        {answer.isCorrect ? (
+                                                            <CheckCircle className="w-5 h-5 text-green-500" />
+                                                        ) : (
+                                                            <XCircle className="w-5 h-5 text-red-500" />
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))
+                                        ) : (
+                                            <p className="text-center text-[var(--text-muted)] py-4">No answer details available.</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -163,7 +170,8 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                             )}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
