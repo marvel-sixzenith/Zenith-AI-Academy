@@ -253,7 +253,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                 return (
                     <div className="space-y-3">
                         {Array.isArray(options) && options.map((option, index) => {
-                            const isSelected = (currentAnswer as number[])?.includes(index);
+                            const isSelected = Array.isArray(currentAnswer) && currentAnswer.includes(index);
                             return (
                                 <button
                                     key={index}
