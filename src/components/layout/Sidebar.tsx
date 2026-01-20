@@ -15,7 +15,7 @@ import {
     ChevronRight,
     LogOut
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface SidebarProps {
     user: {
@@ -42,11 +42,23 @@ export default function Sidebar({ user }: SidebarProps) {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
     const isAdmin = user.role === 'ADMIN';
 
     const handleSignOut = async () => {
         await signOut({ callbackUrl: '/login' });
     };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
         <>
@@ -131,7 +143,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 </nav>
 
                 {/* User Info */}
-                <div className="p-4 border-t border-[var(--border-color)] relative">
+                <div className="p-4 border-t border-[var(--border-color)] relative" ref={profileRef}>
                     <button
                         onClick={() => !isCollapsed && setIsProfileOpen(!isProfileOpen)}
                         className={`w-full flex items-center gap-3 rounded-xl p-2 transition hover:bg-[var(--background-card)] ${isCollapsed ? 'justify-center cursor-default' : 'cursor-pointer'}`}

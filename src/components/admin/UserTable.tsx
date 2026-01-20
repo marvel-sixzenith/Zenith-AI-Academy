@@ -177,8 +177,9 @@ export default function UserTable({ users }: UserTableProps) {
                 <div className="flex items-center gap-3 relative" ref={exportMenuRef}>
                     <button
                         onClick={() => setShowExportMenu(!showExportMenu)}
-                        disabled={isExporting}
-                        className={`btn-secondary min-w-[140px] justify-between transition-all ${isExporting ? 'opacity-80 cursor-wait' : ''}`}
+                        disabled={isExporting || selectedUsers.size === 0}
+                        className={`btn-secondary min-w-[140px] justify-between transition-all ${isExporting ? 'opacity-80 cursor-wait' : ''
+                            } ${selectedUsers.size === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className="flex items-center">
                             {isExporting ? (

@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
+import { useState, useRef, useEffect } from 'react';
 import {
     LayoutDashboard,
     Users,
@@ -9,7 +11,9 @@ import {
     BarChart3,
     Settings,
     Zap,
-    ArrowLeft
+    ArrowLeft,
+    LogOut,
+    User
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -31,6 +35,23 @@ const navItems = [
 
 export default function AdminSidebar({ user }: AdminSidebarProps) {
     const pathname = usePathname();
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+
+    const handleSignOut = async () => {
+        await signOut({ callbackUrl: '/login' });
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
         <aside className="fixed top-0 left-0 z-50 h-full w-64 bg-[var(--background-secondary)] border-r border-[var(--border-color)] hidden lg:flex flex-col">
@@ -78,9 +99,12 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                 })}
             </nav>
 
-            {/* User Info */}
-            <div className="p-4 border-t border-[var(--border-color)]">
-                <div className="flex items-center gap-3">
+            {/* User Info with Dropdown */}
+            <div className="p-4 border-t border-[var(--border-color)] relative" ref={profileRef}>
+                <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="w-full flex items-center gap-3 rounded-xl p-2 transition hover:bg-[var(--background-card)] cursor-pointer"
+                >
                     {user.image ? (
                         <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[var(--border-color)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -95,11 +119,36 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                             {user.name?.charAt(0).toUpperCase() || 'A'}
                         </div>
                     )}
-                    <div className="min-w-0">
-                        <p className="font-medium truncate">{user.name}</p>
+                    <div className="min-w-0 text-left flex-1">
+                        <p className="font-medium truncate text-sm">{user.name}</p>
                         <p className="text-xs text-[var(--text-muted)] truncate">{user.role}</p>
                     </div>
-                </div>
+                </button>
+
+                {/* Profile Dropdown */}
+                {isProfileOpen && (
+                    <div className="absolute bottom-full left-4 right-4 mb-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl py-2 animate-in fade-in zoom-in-95 duration-200 shadow-xl z-50">
+                        <div className="px-4 py-2 border-b border-[var(--border-color)] mb-1">
+                            <p className="font-medium truncate text-sm">{user.name}</p>
+                            <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
+                        </div>
+                        <Link
+                            href="/profile"
+                            className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--background-secondary)] transition text-sm"
+                            onClick={() => setIsProfileOpen(false)}
+                        >
+                            <User className="w-4 h-4" />
+                            My Profile
+                        </Link>
+                        <button
+                            onClick={handleSignOut}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-[var(--error)] hover:bg-[var(--background-secondary)] transition text-sm"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Sign Out
+                        </button>
+                    </div>
+                )}
             </div>
         </aside>
     );
