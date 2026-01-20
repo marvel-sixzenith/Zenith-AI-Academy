@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, MoreVertical, UserPlus, Download, ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Filter, MoreVertical, UserPlus, Download, ChevronLeft, ChevronRight, CheckCircle, XCircle, FileSpreadsheet, FileText, File } from 'lucide-react';
 import Image from 'next/image';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface UserTableProps {
     users: any[];
@@ -18,6 +21,10 @@ export default function UserTable({ users }: UserTableProps) {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const exportMenuRef = useRef<HTMLDivElement>(null);
     const itemsPerPage = 10;
 
     // Filter users
@@ -33,42 +40,120 @@ export default function UserTable({ users }: UserTableProps) {
         currentPage * itemsPerPage
     );
 
-    const [isExporting, setIsExporting] = useState(false);
+    // Selection Logic
+    const toggleSelectAll = () => {
+        if (selectedUsers.size === filteredUsers.length) {
+            setSelectedUsers(new Set());
+        } else {
+            setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+        }
+    };
 
-    const handleExportCSV = async () => {
+    const toggleSelectUser = (id: string) => {
+        // e.stopPropagation(); // Handled by parent td onClick
+        const newSelected = new Set(selectedUsers);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedUsers(newSelected);
+    };
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+                setShowExportMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getUsersToExport = () => {
+        if (selectedUsers.size > 0) {
+            return users.filter(u => selectedUsers.has(u.id)); // Use global users to find full object by ID to support selection across pages if needed, though for now filtering current view is safer. Actually, safer to filter 'users' (all loaded) by ID.
+        }
+        return filteredUsers;
+    };
+
+    const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {
         setIsExporting(true);
+        setShowExportMenu(false);
 
-        // Wrap in setTimeout to allow UI to update (show loading) before blocking CPU
         setTimeout(() => {
             try {
-                const headers = ['ID', 'Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active', 'Joined Date'];
-                const csvContent = [
-                    headers.join(','),
-                    ...filteredUsers.map(user => [
-                        user.id,
-                        `"${user.name}"`,
-                        user.email,
-                        user.role,
-                        user.points,
-                        `${user.progress}%`,
-                        user.lastActive,
-                        user.createdAt
-                    ].join(','))
-                ].join('\n');
+                const usersToExport = getUsersToExport();
+                const timestamp = new Date().toISOString().split('T')[0];
+                const fileName = `zenith_users_${timestamp}`;
 
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                if (link.download !== undefined) {
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `zenith_users_${new Date().toISOString().split('T')[0]}.csv`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
+                if (format === 'csv') {
+                    // CSV Export
+                    const headers = ['ID', 'Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active', 'Joined Date'];
+                    const csvContent = [
+                        headers.join(','),
+                        ...usersToExport.map(user => [
+                            user.id,
+                            `"${user.name}"`,
+                            user.email,
+                            user.role,
+                            user.points,
+                            `${user.progress}%`,
+                            user.lastActive,
+                            user.createdAt
+                        ].join(','))
+                    ].join('\n');
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `${fileName}.csv`;
                     link.click();
-                    document.body.removeChild(link);
                 }
+                else if (format === 'excel') {
+                    // Excel Export (xlsx)
+                    const data = usersToExport.map(user => ({
+                        ID: user.id,
+                        Name: user.name,
+                        Email: user.email,
+                        Role: user.role,
+                        Points: user.points,
+                        Progress: `${user.progress}%`,
+                        'Last Active': user.lastActive,
+                        'Joined Date': user.createdAt
+                    }));
+
+                    const worksheet = XLSX.utils.json_to_sheet(data);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+                    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+                }
+                else if (format === 'pdf') {
+                    // PDF Export
+                    const doc = new jsPDF();
+                    doc.text("Zenith AI Academy - User Report", 14, 20);
+                    doc.text(`Generated on: ${timestamp}`, 14, 28);
+
+                    autoTable(doc, {
+                        startY: 35,
+                        head: [['Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active']],
+                        body: usersToExport.map((u: any) => [
+                            u.name,
+                            u.email,
+                            u.role,
+                            u.points.toLocaleString(),
+                            `${u.progress}%`,
+                            u.lastActive
+                        ]),
+                    });
+
+                    doc.save(`${fileName}.pdf`);
+                }
+
             } catch (error) {
                 console.error("Export failed", error);
+                alert("Export failed. Please try again.");
             } finally {
                 setIsExporting(false);
             }
@@ -89,24 +174,55 @@ export default function UserTable({ users }: UserTableProps) {
                     />
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 relative" ref={exportMenuRef}>
                     <button
-                        onClick={handleExportCSV}
+                        onClick={() => setShowExportMenu(!showExportMenu)}
                         disabled={isExporting}
-                        className={`btn-secondary transition-all ${isExporting ? 'opacity-80 cursor-wait' : ''}`}
+                        className={`btn-secondary min-w-[140px] justify-between transition-all ${isExporting ? 'opacity-80 cursor-wait' : ''}`}
                     >
-                        {isExporting ? (
-                            <div className="w-5 h-5 mr-2 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin inline-block" />
-                        ) : (
-                            <Download className="w-5 h-5 mr-2 inline-block" />
+                        <div className="flex items-center">
+                            {isExporting ? (
+                                <div className="w-5 h-5 mr-2 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <Download className="w-5 h-5 mr-2" />
+                            )}
+                            <span>{isExporting ? 'Exporting...' : 'Export'}</span>
+                        </div>
+                        {selectedUsers.size > 0 && (
+                            <span className="ml-2 bg-[var(--primary)] text-white text-xs px-2 py-0.5 rounded-full">
+                                {selectedUsers.size}
+                            </span>
                         )}
-                        {isExporting ? 'Exporting...' : 'Export CSV'}
                     </button>
-                    {/* Placeholder for Add User */}
-                    <button className="btn-primary opacity-50 cursor-not-allowed">
-                        <UserPlus className="w-5 h-5 mr-2" />
-                        Add User
-                    </button>
+
+                    {/* Styled Export Dropdown */}
+                    {showExportMenu && (
+                        <div className="absolute top-full right-0 mt-2 w-48 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="p-2 space-y-1">
+                                <button
+                                    onClick={() => handleExport('csv')}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--background-secondary)] rounded-lg transition text-left"
+                                >
+                                    <FileText className="w-4 h-4 text-emerald-500" />
+                                    CSV
+                                </button>
+                                <button
+                                    onClick={() => handleExport('excel')}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--background-secondary)] rounded-lg transition text-left"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                                    Excel (.xlsx)
+                                </button>
+                                <button
+                                    onClick={() => handleExport('pdf')}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--background-secondary)] rounded-lg transition text-left"
+                                >
+                                    <File className="w-4 h-4 text-red-500" />
+                                    PDF
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -115,6 +231,14 @@ export default function UserTable({ users }: UserTableProps) {
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30">
+                                <th className="p-4 w-10">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-[var(--border-color)] bg-[var(--surface)] text-[var(--primary)] focus:ring-[var(--primary)] w-4 h-4 cursor-pointer"
+                                        checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                                        onChange={toggleSelectAll}
+                                    />
+                                </th>
                                 <th className="text-left p-4 text-sm font-medium text-[var(--text-muted)]">User</th>
                                 <th className="text-left p-4 text-sm font-medium text-[var(--text-muted)]">Role</th>
                                 <th className="text-left p-4 text-sm font-medium text-[var(--text-muted)]">Points</th>
@@ -130,8 +254,17 @@ export default function UserTable({ users }: UserTableProps) {
                                     <tr
                                         key={user.id}
                                         onClick={() => router.push(`/admin/users/${user.id}`)}
-                                        className="border-b border-[var(--border-color)] hover:bg-[var(--background-secondary)]/50 transition cursor-pointer group"
+                                        className={`border-b border-[var(--border-color)] transition cursor-pointer group ${selectedUsers.has(user.id) ? 'bg-[var(--primary)]/5' : 'hover:bg-[var(--background-secondary)]/50'
+                                            }`}
                                     >
+                                        <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-[var(--border-color)] bg-[var(--surface)] text-[var(--primary)] focus:ring-[var(--primary)] w-4 h-4 cursor-pointer"
+                                                checked={selectedUsers.has(user.id)}
+                                                onChange={() => toggleSelectUser(user.id)}
+                                            />
+                                        </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
                                                 {user.image ? (
@@ -179,7 +312,7 @@ export default function UserTable({ users }: UserTableProps) {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="p-8 text-center text-[var(--text-muted)]">
+                                    <td colSpan={8} className="p-8 text-center text-[var(--text-muted)]">
                                         No users found matching "{searchTerm}"
                                     </td>
                                 </tr>
