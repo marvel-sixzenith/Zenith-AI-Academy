@@ -92,8 +92,13 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
 
     const handleNext = () => {
         // Validation before next
-        if (currentType === 'CHECKBOXES' && (!currentAnswer || currentAnswer.length === 0)) return;
-        if ((currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') && !currentAnswer?.trim()) return;
+        if (currentType === 'CHECKBOXES' && (!currentAnswer || (Array.isArray(currentAnswer) && currentAnswer.length === 0))) return;
+
+        // Safety check for string types: ensure it is actually a string before trim
+        if ((currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH')) {
+            if (typeof currentAnswer !== 'string' || !currentAnswer.trim()) return;
+        }
+
         if ((currentType === 'MULTIPLE_CHOICE' || currentType === 'DROPDOWN') && currentAnswer === null) return;
 
         const newAllAnswers = [...allAnswers];
@@ -120,6 +125,12 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
 
             const qType = q.type || 'MULTIPLE_CHOICE';
             const correctAns = q.correctAnswer;
+
+            // Optional Answer Logic: If no correct answer is defined, mark as correct (Participation)
+            if (correctAns === undefined || correctAns === null || correctAns === '') {
+                correctCount++;
+                return;
+            }
 
             let isCorrect = false;
 
@@ -326,7 +337,9 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
 
     const isNextDisabled = () => {
         if (currentType === 'CHECKBOXES') return !currentAnswer || (currentAnswer as number[]).length === 0;
-        if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') return !currentAnswer?.trim();
+        if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') {
+            return typeof currentAnswer !== 'string' || !currentAnswer.trim();
+        }
         return currentAnswer === null;
     };
 
