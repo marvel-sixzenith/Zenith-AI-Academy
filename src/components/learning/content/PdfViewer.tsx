@@ -10,7 +10,7 @@ export default function PdfViewer({ url, title }: { url: string, title?: string 
     if (!url) return null;
 
     return (
-        <div className="flex flex-col gap-6 w-full md:w-1/2 mx-auto">
+        <div className="flex flex-col gap-6 w-full md:w-4/5 mx-auto">
             <div className="glass-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-orange-600/20 flex items-center justify-center border border-red-500/20 shadow-lg shadow-red-500/10">
