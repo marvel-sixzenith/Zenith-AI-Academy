@@ -33,33 +33,46 @@ export default function UserTable({ users }: UserTableProps) {
         currentPage * itemsPerPage
     );
 
-    const handleExportCSV = () => {
-        const headers = ['ID', 'Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active', 'Joined Date'];
-        const csvContent = [
-            headers.join(','),
-            ...filteredUsers.map(user => [
-                user.id,
-                `"${user.name}"`, // Quote name to handle commas
-                user.email,
-                user.role,
-                user.points,
-                `${user.progress}%`,
-                user.lastActive,
-                user.createdAt
-            ].join(','))
-        ].join('\n');
+    const [isExporting, setIsExporting] = useState(false);
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `zenith_users_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+    const handleExportCSV = async () => {
+        setIsExporting(true);
+
+        // Wrap in setTimeout to allow UI to update (show loading) before blocking CPU
+        setTimeout(() => {
+            try {
+                const headers = ['ID', 'Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active', 'Joined Date'];
+                const csvContent = [
+                    headers.join(','),
+                    ...filteredUsers.map(user => [
+                        user.id,
+                        `"${user.name}"`,
+                        user.email,
+                        user.role,
+                        user.points,
+                        `${user.progress}%`,
+                        user.lastActive,
+                        user.createdAt
+                    ].join(','))
+                ].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                if (link.download !== undefined) {
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `zenith_users_${new Date().toISOString().split('T')[0]}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            } catch (error) {
+                console.error("Export failed", error);
+            } finally {
+                setIsExporting(false);
+            }
+        }, 100);
     };
 
     return (
@@ -79,10 +92,15 @@ export default function UserTable({ users }: UserTableProps) {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={handleExportCSV}
-                        className="btn-secondary"
+                        disabled={isExporting}
+                        className={`btn-secondary transition-all ${isExporting ? 'opacity-80 cursor-wait' : ''}`}
                     >
-                        <Download className="w-5 h-5 mr-2" />
-                        Export CSV
+                        {isExporting ? (
+                            <div className="w-5 h-5 mr-2 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin inline-block" />
+                        ) : (
+                            <Download className="w-5 h-5 mr-2 inline-block" />
+                        )}
+                        {isExporting ? 'Exporting...' : 'Export CSV'}
                     </button>
                     {/* Placeholder for Add User */}
                     <button className="btn-primary opacity-50 cursor-not-allowed">
