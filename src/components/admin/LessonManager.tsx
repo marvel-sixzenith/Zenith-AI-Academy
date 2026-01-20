@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, GripVertical, Eye } from 'lucide-react';
 import VideoEditor from './lesson-editors/VideoEditor';
 import PdfEditor from './lesson-editors/PdfEditor';
 import QuizEditor from './lesson-editors/QuizEditor';
 import AssignmentEditor from './lesson-editors/AssignmentEditor';
+import VideoPlayer from '@/components/learning/VideoPlayer';
+import PdfViewer from '@/components/learning/content/PdfViewer';
+import { toast } from 'react-hot-toast';
 import {
     DndContext,
     closestCenter,
@@ -128,6 +131,8 @@ export default function LessonManager() {
     const [showForm, setShowForm] = useState(false);
     const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
     const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('all');
+    const [showPreview, setShowPreview] = useState(false);
+
     const [formData, setFormData] = useState({
         moduleId: '',
         title: '',
@@ -177,6 +182,7 @@ export default function LessonManager() {
             setLessons(allLessons);
         } catch (error) {
             console.error('Failed to fetch data:', error);
+            toast.error('Failed to load lessons');
         } finally {
             setIsLoading(false);
         }
@@ -225,11 +231,25 @@ export default function LessonManager() {
                     })
                 )
             );
+            toast.success('Lesson order updated');
         } catch (error) {
             console.error('Failed to update order:', error);
+            toast.error('Failed to save lesson order');
             // Revert on error
             fetchData();
         }
+    };
+
+    const handleContentTypeChange = (newType: string) => {
+        if (newType === formData.contentType) return;
+
+        // Reset content data when switching types to avoid structure mismatch bugs
+        setFormData({
+            ...formData,
+            contentType: newType,
+            contentData: '{}'
+        });
+        toast('Content data reset for new type', { icon: 'ℹ️' });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -256,6 +276,12 @@ export default function LessonManager() {
                                 file_url: contentDataToSend
                             });
                         }
+                    } else {
+                        // Empty data is risky for some types
+                        if (formData.contentType === 'VIDEO' || formData.contentType === 'PDF') {
+                            toast.error(`Please provide a ${formData.contentType === 'VIDEO' ? 'YouTube URL' : 'PDF URL'}`);
+                            return;
+                        }
                     }
                 }
             } else {
@@ -263,7 +289,7 @@ export default function LessonManager() {
                     const parsed = JSON.parse(contentDataToSend);
                     contentDataToSend = JSON.stringify(parsed);
                 } catch (error) {
-                    alert('Invalid JSON format for content data. Please check your input.');
+                    toast.error('Invalid JSON format for content data');
                     return;
                 }
             }
@@ -291,13 +317,14 @@ export default function LessonManager() {
             if (response.ok) {
                 fetchData();
                 resetForm();
+                toast.success(editingLesson ? 'Lesson updated successfully!' : 'Lesson created successfully!');
             } else {
                 const errorData = await response.json();
-                alert(`Failed to save lesson: ${errorData.error || 'Unknown error'}`);
+                toast.error(`Failed to save: ${errorData.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Failed to save lesson:', error);
-            alert('An error occurred while saving the lesson.');
+            toast.error('An error occurred while saving the lesson.');
         }
     };
 
@@ -307,8 +334,10 @@ export default function LessonManager() {
         try {
             await fetch(`/api/admin/lessons/${id}`, { method: 'DELETE' });
             fetchData();
+            toast.success('Lesson deleted');
         } catch (error) {
             console.error('Failed to delete lesson:', error);
+            toast.error('Failed to delete lesson');
         }
     };
 
@@ -338,8 +367,10 @@ export default function LessonManager() {
                 status: lesson.status,
             });
             setShowForm(true);
+            setShowPreview(false);
         } catch (error) {
             console.error('Failed to fetch lesson details:', error);
+            toast.error('Failed to load lesson details');
             setEditingLesson(lesson);
             setFormData({
                 moduleId: lesson.moduleId,
@@ -366,7 +397,30 @@ export default function LessonManager() {
             orderIndex: 0,
             status: 'DRAFT',
         });
+        setShowPreview(false);
     };
+
+    // Helper to get preview data safely
+    const getPreviewData = () => {
+        try {
+            const trimmed = formData.contentData.trim();
+            if (!trimmed || trimmed === '{}') return null;
+
+            // Try parsing as JSON first
+            try {
+                return JSON.parse(trimmed);
+            } catch {
+                // If not JSON, treat as raw URL string for VIDEO/PDF
+                if (formData.contentType === 'VIDEO') return { youtube_url: trimmed, video_url: trimmed };
+                if (formData.contentType === 'PDF') return { file_url: trimmed, pdf_url: trimmed };
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    };
+
+    const previewData = getPreviewData();
 
     if (isLoading) return <div>Loading lessons...</div>;
 
@@ -426,7 +480,7 @@ export default function LessonManager() {
                                 <label className="block text-sm font-medium mb-2">Content Type *</label>
                                 <select
                                     value={formData.contentType}
-                                    onChange={(e) => setFormData({ ...formData, contentType: e.target.value })}
+                                    onChange={(e) => handleContentTypeChange(e.target.value)}
                                     className="input-field w-full"
                                 >
                                     <option value="VIDEO">Video</option>
@@ -479,6 +533,37 @@ export default function LessonManager() {
                                 />
                             )}
                         </div>
+
+                        {/* Live Preview Section */}
+                        {(formData.contentType === 'VIDEO' || formData.contentType === 'PDF') && previewData && (
+                            <div className="mt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPreview(!showPreview)}
+                                    className="text-sm flex items-center gap-2 text-[var(--primary-light)] hover:text-[var(--primary)] mb-2 font-medium"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    {showPreview ? 'Hide Preview' : 'Show Live Preview'}
+                                </button>
+
+                                {showPreview && (
+                                    <div className="border border-[var(--border-color)] rounded-xl overflow-hidden bg-black/20 p-4">
+                                        <p className="text-xs text-[var(--text-muted)] mb-3 uppercase tracking-wider font-semibold">Preview Mode</p>
+                                        {formData.contentType === 'VIDEO' && (
+                                            <VideoPlayer
+                                                youtubeUrl={previewData.youtube_url}
+                                                videoUrl={previewData.video_url || previewData.url}
+                                            />
+                                        )}
+                                        {formData.contentType === 'PDF' && (
+                                            <PdfViewer
+                                                url={previewData.file_url || previewData.pdf_url || previewData.url}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
