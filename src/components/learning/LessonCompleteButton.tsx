@@ -46,58 +46,69 @@ export default function LessonCompleteButton({ lessonId, lessonTitle, contentTyp
         <>
             <button
                 onClick={() => setShowModal(true)}
-                className="btn-secondary"
+                className="btn-secondary group hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300"
             >
-                Mark as Complete
+                <CheckCircle className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
+                <span>Mark as Complete</span>
             </button>
 
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="glass-card p-6 max-w-md w-full animate-fade-in">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-bold">Mark as Complete?</h2>
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="p-1 rounded hover:bg-[var(--background-card)]"
-                                disabled={isSubmitting}
-                            >
-                                <CheckCircle className="w-5 h-5" />
-                            </button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop with blur and darken */}
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300 animate-fade-in"
+                        onClick={() => !isSubmitting && setShowModal(false)}
+                    />
+
+                    {/* Modal Content */}
+                    <div className="relative glass-card p-8 max-w-md w-full animate-slide-up flex flex-col items-center text-center border-t border-white/10 shadow-2xl shadow-blue-900/20">
+
+                        {/* Glowing Icon Header */}
+                        <div className="mb-6 relative">
+                            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />
+                            <CheckCircle className="w-16 h-16 text-blue-500 relative z-10 animate-pulse-slow" />
                         </div>
 
+                        <h2 className="text-2xl font-bold mb-2 text-gradient">Mark as Complete?</h2>
+
+                        <p className="text-[var(--text-secondary)] mb-8 text-base leading-relaxed">
+                            Are you sure you want to mark <span className="text-[var(--text-primary)] font-medium">&quot;{lessonTitle}&quot;</span> as complete?
+                            <span className="block mt-2 text-sm text-[var(--text-muted)]">
+                                {contentType === 'VIDEO' && 'Make sure you\'ve watched the entire video.'}
+                                {contentType === 'PDF' && 'Make sure you\'ve read the entire document.'}
+                                {contentType === 'ASSIGNMENT' && 'Make sure you\'ve completed the assignment.'}
+                            </span>
+                        </p>
+
                         {error && (
-                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-2">
-                                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                                <p className="text-sm text-red-500">{error}</p>
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 w-full text-left animate-shake">
+                                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                                <p className="text-sm text-red-500 font-medium">{error}</p>
                             </div>
                         )}
 
-                        <p className="text-[var(--text-secondary)] mb-6">
-                            Are you sure you want to mark &quot;{lessonTitle}&quot; as complete?
-                            {contentType === 'VIDEO' && ' Make sure you\'ve watched the entire video.'}
-                            {contentType === 'PDF' && ' Make sure you\'ve read the entire document.'}
-                            {contentType === 'ASSIGNMENT' && ' Make sure you\'ve completed the assignment.'}
-                        </p>
-
-                        <div className="flex items-center gap-3 justify-end">
+                        <div className="flex items-center gap-3 w-full">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="btn-secondary"
+                                className="btn-secondary flex-1 justify-center py-3.5 hover:bg-white/5 border-white/10 text-[var(--text-secondary)] hover:text-white"
                                 disabled={isSubmitting}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleComplete}
-                                className="btn-primary"
+                                className="btn-primary flex-1 justify-center py-3.5 shadow-lg shadow-blue-500/20"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? (
-                                    <>Processing...</>
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Processing...</span>
+                                    </>
                                 ) : (
                                     <>
                                         <CheckCircle className="w-5 h-5" />
-                                        Confirm Complete
+                                        <span>Confirm</span>
                                     </>
                                 )}
                             </button>
