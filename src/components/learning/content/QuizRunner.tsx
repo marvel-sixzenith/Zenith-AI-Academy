@@ -252,7 +252,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
             case 'CHECKBOXES':
                 return (
                     <div className="space-y-3">
-                        {options.map((option, index) => {
+                        {Array.isArray(options) && options.map((option, index) => {
                             const isSelected = (currentAnswer as number[])?.includes(index);
                             return (
                                 <button
@@ -287,7 +287,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                             className="w-full p-4 text-lg rounded-xl bg-[var(--background-secondary)] border border-[var(--border-color)] focus:border-[var(--primary)] outline-none transition-all"
                         >
                             <option value="" disabled>Select an answer...</option>
-                            {options.map((option, index) => (
+                            {Array.isArray(options) && options.map((option, index) => (
                                 <option key={index} value={index}>{option}</option>
                             ))}
                         </select>
