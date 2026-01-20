@@ -145,7 +145,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             </Link>
                         ) : <div />}
 
-                        {navigation.next ? (
+                        {(navigation.next && (isCompleted || isAdmin)) ? (
                             <Link
                                 href={`/lessons/${navigation.next.id}`}
                                 className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition text-right"

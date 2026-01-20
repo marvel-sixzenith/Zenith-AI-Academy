@@ -16,7 +16,7 @@ export default function AssignmentView({ data }: AssignmentViewProps) {
 
     return (
         <div className="space-y-6">
-            <div className="glass-card p-6 md:p-8">
+            <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 md:p-8 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
                         <ClipboardList className="w-6 h-6" />
