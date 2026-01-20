@@ -61,7 +61,7 @@ export default function LessonCompleteButton({ lessonId, lessonTitle, contentTyp
                     />
 
                     {/* Modal Content */}
-                    <div className="relative glass-card p-8 max-w-md w-full animate-slide-up flex flex-col items-center text-center border-t border-white/10 shadow-2xl shadow-blue-900/20">
+                    <div className="relative bg-[#0f172a] border border-blue-500/20 rounded-2xl p-8 max-w-md w-full animate-slide-up flex flex-col items-center text-center shadow-2xl shadow-black/80">
 
                         {/* Glowing Icon Header */}
                         <div className="mb-6 relative">
