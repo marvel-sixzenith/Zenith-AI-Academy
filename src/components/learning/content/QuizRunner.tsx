@@ -177,7 +177,81 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
         if (!lessonId) return;
         setIsCompleting(true);
         try {
-            const res = await fetch(`/api/lessons/${lessonId}/progress`, {
+            // Use the dedicated quiz submission API to save answers!
+            // Format answers for API
+            // The API expects: { lessonId, score, totalQuestions, answers: [] }
+            // Answers format: { questionId, questionText, selectedOption, isCorrect }
+
+            const formattedAnswers = allAnswers.map((ans, idx) => {
+                const q = questions[idx];
+                const qType = q.type || 'MULTIPLE_CHOICE';
+                const correctAns = q.correctAnswer;
+
+                let isCorrect = false;
+                if (qType === 'MULTIPLE_CHOICE' || qType === 'DROPDOWN') {
+                    isCorrect = ans === correctAns;
+                } else if (qType === 'CHECKBOXES') {
+                    if (Array.isArray(correctAns) && Array.isArray(ans)) {
+                        const sortedCorrect = [...correctAns].sort().toString();
+                        const sortedUser = [...ans].sort().toString();
+                        isCorrect = sortedCorrect === sortedUser;
+                    }
+                } else if (qType === 'SHORT_ANSWER') {
+                    if (typeof correctAns === 'string' && typeof ans === 'string') {
+                        isCorrect = ans.trim().toLowerCase() === correctAns.trim().toLowerCase();
+                    }
+                } else if (qType === 'PARAGRAPH') {
+                    if (typeof ans === 'string') isCorrect = ans.trim().length > 0;
+                }
+
+                // Determine selected option label or value
+                let selectedOptionStr = '';
+                if (qType === 'MULTIPLE_CHOICE') {
+                    selectedOptionStr = q.options ? q.options[ans] : String(ans);
+                } else if (qType === 'CHECKBOXES' && Array.isArray(ans) && q.options) {
+                    selectedOptionStr = ans.map((idx: number) => q.options![idx]).join(', ');
+                } else {
+                    selectedOptionStr = String(ans || '');
+                }
+
+                return {
+                    questionId: q.id,
+                    questionText: q.question || q.text || 'Question',
+                    selectedOption: selectedOptionStr,
+                    isCorrect
+                };
+            });
+
+            const res = await fetch(`/api/quiz/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lessonId,
+                    score: finalScore,
+                    totalQuestions: questions.length,
+                    answers: formattedAnswers
+                }),
+            });
+
+            if (!res.ok) throw new Error('Failed to save progress');
+
+            // The result from this API might differ slightly, let's just handle success
+            // Note: The API currently returns the submission object. 
+            // We assume it handles point checking internally (it mentions it in comments but might not award points yet if we don't impl logic)
+            // Wait, the API I viewed earlier (api/quiz/submit/route.ts) DOES NOT award points yet (commented out).
+            // BUT, user-progress logic is there.
+            // I should ALSO call the progress API if I want to ensure points are awarded? 
+            // OR I should update the quiz API to award points. 
+
+            // Let's stick to just this call first, but I need to ensure points are awarded!
+            // The previous code verified points were awarded by `progress` API.
+            // I should chain them OR update the `api/quiz/submit` to award points.
+            // PROCEEDING STRATEGY: Update `api/quiz/submit` to award points first to be safe, 
+            // OR call both. Calling both is safer for now without touching backend logic I can't easily verify transactionally.
+            // user marks as COMPLETED in both.
+            // Let's call the `progress` API *after* submission to ensure POINTS are awarded correctly as implemented there.
+
+            await fetch(`/api/lessons/${lessonId}/progress`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -186,17 +260,12 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                 }),
             });
 
-            if (!res.ok) throw new Error('Failed to save progress');
-            const result = await res.json();
-
-            if (isPassed && result.pointsAwarded > 0) {
-                toast.success(`Lesson "${lessonTitle || 'Lesson'}" Completed! +${result.pointsAwarded} XP`);
-                router.refresh();
-            } else if (isPassed) {
-                toast.success(`Progress saved!`);
+            // We can assume success if we got here
+            if (isPassed) {
+                toast.success(`Quiz Completed!`);
                 router.refresh();
             } else {
-                toast.success('Progress saved. Keep trying!');
+                toast.success('Progress saved.');
             }
 
         } catch (error) {

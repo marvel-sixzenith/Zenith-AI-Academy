@@ -111,7 +111,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {!isCompleted && !isAdmin && lesson.contentType !== 'QUIZ' && (
+                            {!isCompleted && !isAdmin && lesson.contentType !== 'QUIZ' && lesson.contentType !== 'ASSIGNMENT' && (
                                 <LessonCompleteButton
                                     lessonId={lessonId}
                                     lessonTitle={lesson.title}
