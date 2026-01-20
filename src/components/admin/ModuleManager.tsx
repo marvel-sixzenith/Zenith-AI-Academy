@@ -1,7 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, GripVertical } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Track {
     id: string;
@@ -17,6 +35,81 @@ interface Module {
     track?: Track;
 }
 
+// Sortable Module Item Component
+function SortableModuleItem({
+    module,
+    onEdit,
+    onDelete
+}: {
+    module: Module;
+    onEdit: (module: Module) => void;
+    onDelete: (id: string) => void;
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: module.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`p-4 flex items-center justify-between border-b border-[var(--border-color)] last:border-b-0 ${isDragging ? 'bg-[var(--primary)]/5' : ''}`}
+        >
+            <div className="flex items-center gap-3">
+                {/* Drag Handle */}
+                <button
+                    {...attributes}
+                    {...listeners}
+                    className="p-1.5 rounded-lg cursor-grab hover:bg-[var(--background-card)] text-[var(--text-muted)] active:cursor-grabbing"
+                    title="Drag to reorder"
+                >
+                    <GripVertical className="w-5 h-5" />
+                </button>
+
+                <div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-[var(--text-muted)] font-mono bg-[var(--background-secondary)] px-1.5 py-0.5 rounded">
+                            #{module.orderIndex + 1}
+                        </span>
+                        <h4 className="font-bold">{module.name}</h4>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)]">
+                        Track: {module.track?.name || 'Unknown'}
+                    </p>
+                    {module.description && (
+                        <p className="text-sm text-[var(--text-secondary)] mt-1">{module.description}</p>
+                    )}
+                </div>
+            </div>
+            <div className="flex gap-2">
+                <button
+                    onClick={() => onEdit(module)}
+                    className="p-2 rounded-lg hover:bg-[var(--background-card)]"
+                >
+                    <Edit className="w-5 h-5" />
+                </button>
+                <button
+                    onClick={() => onDelete(module.id)}
+                    className="p-2 rounded-lg hover:bg-red-500/10 text-red-500"
+                >
+                    <Trash2 className="w-5 h-5" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function ModuleManager() {
     const [modules, setModules] = useState<Module[]>([]);
     const [tracks, setTracks] = useState<Track[]>([]);
@@ -30,6 +123,13 @@ export default function ModuleManager() {
         description: '',
         orderIndex: 0,
     });
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     useEffect(() => {
         fetchData();
@@ -65,8 +165,63 @@ export default function ModuleManager() {
             setModules(allModules);
         } catch (error) {
             console.error('Failed to fetch data:', error);
+            toast.error('Failed to load data');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // Filter modules based on selection
+    const filteredModules = selectedTrackFilter === 'all'
+        ? modules
+        : modules.filter(m => m.trackId === selectedTrackFilter);
+
+    // Handle drag end
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = filteredModules.findIndex(m => m.id === active.id);
+        const newIndex = filteredModules.findIndex(m => m.id === over.id);
+
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        // Reorder locally
+        const reorderedModules = arrayMove(filteredModules, oldIndex, newIndex);
+
+        // Update order indices
+        const updatedModules = reorderedModules.map((module, index) => ({
+            ...module,
+            orderIndex: index
+        }));
+
+        // Update state optimistically
+        if (selectedTrackFilter === 'all') {
+            setModules(updatedModules);
+        } else {
+            // Merge with modules from other tracks
+            const otherModules = modules.filter(m => m.trackId !== selectedTrackFilter);
+            setModules([...otherModules, ...updatedModules].sort((a, b) => a.orderIndex - b.orderIndex));
+        }
+
+        // Send updates to server
+        try {
+            await Promise.all(
+                updatedModules.map(module =>
+                    fetch(`/api/admin/modules/${module.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderIndex: module.orderIndex }),
+                    })
+                )
+            );
+            toast.success('Module order updated');
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            toast.error('Failed to save module order');
+            // Revert on error
+            fetchData();
         }
     };
 
@@ -96,11 +251,13 @@ export default function ModuleManager() {
             if (response.ok) {
                 fetchData();
                 resetForm();
+                toast.success(editingModule ? 'Module updated successfully' : 'Module created successfully');
             } else {
-                alert('Failed to save module');
+                toast.error('Failed to save module');
             }
         } catch (error) {
             console.error('Failed to save module:', error);
+            toast.error('An error occurred');
         }
     };
 
@@ -110,8 +267,10 @@ export default function ModuleManager() {
         try {
             await fetch(`/api/admin/modules/${id}`, { method: 'DELETE' });
             fetchData();
+            toast.success('Module deleted');
         } catch (error) {
             console.error('Failed to delete module:', error);
+            toast.error('Failed to delete module');
         }
     };
 
@@ -136,11 +295,6 @@ export default function ModuleManager() {
             orderIndex: 0
         });
     };
-
-    // Filter modules based on selection
-    const filteredModules = selectedTrackFilter === 'all'
-        ? modules
-        : modules.filter(m => m.trackId === selectedTrackFilter);
 
     if (isLoading) return <div>Loading modules...</div>;
 
@@ -248,7 +402,16 @@ export default function ModuleManager() {
                 </div>
             )}
 
-            <div className="glass-card divide-y divide-[var(--border-color)]">
+            <div className="glass-card overflow-hidden">
+                <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30">
+                    <div className="flex items-center gap-2">
+                        <GripVertical className="w-4 h-4 text-[var(--text-muted)]" />
+                        <span className="text-sm text-[var(--text-muted)]">
+                            Drag modules to reorder them within the selected track
+                        </span>
+                    </div>
+                </div>
+
                 {filteredModules.length === 0 ? (
                     <div className="p-8 text-center text-[var(--text-muted)]">
                         {selectedTrackFilter === 'all'
@@ -256,38 +419,25 @@ export default function ModuleManager() {
                             : 'No modules in this track yet.'}
                     </div>
                 ) : (
-                    filteredModules.map((module) => (
-                        <div key={module.id} className="p-4 flex items-center justify-between">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-[var(--text-muted)] font-mono bg-[var(--background-secondary)] px-1.5 py-0.5 rounded">
-                                        #{module.orderIndex + 1}
-                                    </span>
-                                    <h4 className="font-bold">{module.name}</h4>
-                                </div>
-                                <p className="text-sm text-[var(--text-muted)]">
-                                    Track: {module.track?.name || 'Unknown'}
-                                </p>
-                                {module.description && (
-                                    <p className="text-sm text-[var(--text-secondary)] mt-1">{module.description}</p>
-                                )}
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleEdit(module)}
-                                    className="p-2 rounded-lg hover:bg-[var(--background-card)]"
-                                >
-                                    <Edit className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(module.id)}
-                                    className="p-2 rounded-lg hover:bg-red-500/10 text-red-500"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-                    ))
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={filteredModules.map(m => m.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {filteredModules.map((module) => (
+                                <SortableModuleItem
+                                    key={module.id}
+                                    module={module}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                        </SortableContext>
+                    </DndContext>
                 )}
             </div>
         </div>
