@@ -130,11 +130,19 @@ export async function getTrackBySlug(slug: string, userId?: string) {
             }
 
             const userProgress = lesson.progress?.[0];
+            let userStatus = userProgress?.status || 'LOCKED';
+
+            // Special handling: If a lesson was completed as a non-quiz (e.g. Video) 
+            // but is now a Quiz, it needs a score to be properly "completed".
+            // If quizScore is null but status is COMPLETED, treat it as UNLOCKED (new).
+            if (lesson.contentType === 'QUIZ' && userStatus === 'COMPLETED' && (userProgress?.quizScore === null || userProgress?.quizScore === undefined)) {
+                userStatus = 'UNLOCKED';
+            }
 
             return {
                 ...lesson,
                 unlockStatus,
-                userStatus: userProgress?.status || 'LOCKED',
+                userStatus,
                 completedAt: userProgress?.completedAt,
                 quizScore: userProgress?.quizScore,
             };

@@ -262,8 +262,13 @@ export default function LessonManager() {
             if (formData.contentType === 'VIDEO' || formData.contentType === 'PDF') {
                 try {
                     const parsed = JSON.parse(contentDataToSend);
+                    // Validate that parsed content has minimal required fields
+                    if (formData.contentType === 'VIDEO' && !parsed.youtube_url && !parsed.video_url) throw new Error('Missing video URL');
+                    if (formData.contentType === 'PDF' && !parsed.file_url) throw new Error('Missing PDF URL');
+
                     contentDataToSend = JSON.stringify(parsed);
                 } catch {
+                    // Fallback for legacy raw strings
                     if (contentDataToSend && contentDataToSend !== '{}') {
                         if (formData.contentType === 'VIDEO') {
                             contentDataToSend = JSON.stringify({
@@ -278,10 +283,8 @@ export default function LessonManager() {
                         }
                     } else {
                         // Empty data is risky for some types
-                        if (formData.contentType === 'VIDEO' || formData.contentType === 'PDF') {
-                            toast.error(`Please provide a ${formData.contentType === 'VIDEO' ? 'YouTube URL' : 'PDF URL'}`);
-                            return;
-                        }
+                        toast.error(`Please provide a ${formData.contentType === 'VIDEO' ? 'YouTube URL' : 'PDF URL'}`);
+                        return;
                     }
                 }
             } else {

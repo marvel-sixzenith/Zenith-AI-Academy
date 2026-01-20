@@ -44,11 +44,15 @@ export default function QuizEditor({ value, onChange }: QuizEditorProps) {
                     // Ensure correctAnswer is preserved
                 }));
                 setQuestions(migratedQuestions);
-                hasLoadedRef.current = true;
-                isInitializedRef.current = true;
             }
+            // Always mark as initialized after first parse attempt, 
+            // even if empty (new quiz) or invalid (reset)
+            hasLoadedRef.current = true;
+            isInitializedRef.current = true;
         } catch {
             // Ignore parse errors, start empty
+            // Also mark as initialized so we can start adding questions
+            hasLoadedRef.current = true;
             isInitializedRef.current = true;
         }
     }, [value]);
