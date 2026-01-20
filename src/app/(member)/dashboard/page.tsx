@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { buttonVariants } from '@/components/ui/Button';
 import clsx from 'clsx';
 import TrackCardInteractive from '@/components/learning/TrackCardInteractive';
+import { checkAndUpdateStreak } from '@/lib/user-streaks';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -16,22 +17,29 @@ export default async function DashboardPage() {
 
     if (!userId) return null; // Should be handled by layout but just in case
 
+    // Check and update streak (this ensures the DB is current before we fetch logic)
+    // We execute this in parallel with other fetches if possible, but for simplicity/correctness we can just await it or promise.all
+    // Ideally, we want the *updated* streak value.
+    const streakResult = await checkAndUpdateStreak(userId);
+
     // Fetch tracks
     const tracks = await getTracks(userId);
 
     // Fetch user stats
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { points: true }
+        select: { points: true, currentStreak: true }
     });
     const userPoints = user?.points || 0;
+    // Use the result from checkAndUpdateStreak if available (it might be fresher), otherwise DB
+    const currentStreak = streakResult?.streak ?? user?.currentStreak ?? 0;
 
     // Get last active lesson
     const lastLesson = await getLastActiveLesson(userId);
 
     const stats = {
         totalPoints: userPoints,
-        streak: 0, // TODO: Implement streak
+        streak: currentStreak,
         rank: 0,  // TODO: Implement leaderboard
     };
 
