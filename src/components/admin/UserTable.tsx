@@ -4,9 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Filter, MoreVertical, UserPlus, Download, ChevronLeft, ChevronRight, CheckCircle, XCircle, FileSpreadsheet, FileText, File } from 'lucide-react';
 import Image from 'next/image';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 
 interface UserTableProps {
     users: any[];
@@ -82,82 +79,85 @@ export default function UserTable({ users }: UserTableProps) {
         setIsExporting(true);
         setShowExportMenu(false);
 
-        setTimeout(() => {
-            try {
-                const usersToExport = getUsersToExport();
-                const timestamp = new Date().toISOString().split('T')[0];
-                const fileName = `zenith_users_${timestamp}`;
+        try {
+            const usersToExport = getUsersToExport();
+            const timestamp = new Date().toISOString().split('T')[0];
+            const fileName = `zenith_users_${timestamp}`;
 
-                if (format === 'csv') {
-                    // CSV Export
-                    const headers = ['ID', 'Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active', 'Joined Date'];
-                    const csvContent = [
-                        headers.join(','),
-                        ...usersToExport.map(user => [
-                            user.id,
-                            `"${user.name}"`,
-                            user.email,
-                            user.role,
-                            user.points,
-                            `${user.progress}%`,
-                            user.lastActive,
-                            user.createdAt
-                        ].join(','))
-                    ].join('\n');
+            if (format === 'csv') {
+                // CSV Export
+                const headers = ['ID', 'Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active', 'Joined Date'];
+                const csvContent = [
+                    headers.join(','),
+                    ...usersToExport.map(user => [
+                        user.id,
+                        `"${user.name}"`,
+                        user.email,
+                        user.role,
+                        user.points,
+                        `${user.progress}%`,
+                        user.lastActive,
+                        user.createdAt
+                    ].join(','))
+                ].join('\n');
 
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `${fileName}.csv`;
-                    link.click();
-                }
-                else if (format === 'excel') {
-                    // Excel Export (xlsx)
-                    const data = usersToExport.map(user => ({
-                        ID: user.id,
-                        Name: user.name,
-                        Email: user.email,
-                        Role: user.role,
-                        Points: user.points,
-                        Progress: `${user.progress}%`,
-                        'Last Active': user.lastActive,
-                        'Joined Date': user.createdAt
-                    }));
-
-                    const worksheet = XLSX.utils.json_to_sheet(data);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
-                    XLSX.writeFile(workbook, `${fileName}.xlsx`);
-                }
-                else if (format === 'pdf') {
-                    // PDF Export
-                    const doc = new jsPDF();
-                    doc.text("Zenith AI Academy - User Report", 14, 20);
-                    doc.text(`Generated on: ${timestamp}`, 14, 28);
-
-                    autoTable(doc, {
-                        startY: 35,
-                        head: [['Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active']],
-                        body: usersToExport.map((u: any) => [
-                            u.name,
-                            u.email,
-                            u.role,
-                            u.points.toLocaleString(),
-                            `${u.progress}%`,
-                            u.lastActive
-                        ]),
-                    });
-
-                    doc.save(`${fileName}.pdf`);
-                }
-
-            } catch (error) {
-                console.error("Export failed", error);
-                alert("Export failed. Please try again.");
-            } finally {
-                setIsExporting(false);
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${fileName}.csv`;
+                link.click();
             }
-        }, 100);
+            else if (format === 'excel') {
+                const XLSX = (await import('xlsx')).default;
+
+                // Excel Export (xlsx)
+                const data = usersToExport.map(user => ({
+                    ID: user.id,
+                    Name: user.name,
+                    Email: user.email,
+                    Role: user.role,
+                    Points: user.points,
+                    Progress: `${user.progress}%`,
+                    'Last Active': user.lastActive,
+                    'Joined Date': user.createdAt
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+                XLSX.writeFile(workbook, `${fileName}.xlsx`);
+            }
+            else if (format === 'pdf') {
+                const jsPDF = (await import('jspdf')).default;
+                const autoTable = (await import('jspdf-autotable')).default;
+
+                // PDF Export
+                const doc = new jsPDF();
+                doc.text("Zenith AI Academy - User Report", 14, 20);
+                doc.text(`Generated on: ${timestamp}`, 14, 28);
+
+                autoTable(doc, {
+                    startY: 35,
+                    head: [['Name', 'Email', 'Role', 'Points', 'Progress', 'Last Active']],
+                    body: usersToExport.map((u: any) => [
+                        u.name,
+                        u.email,
+                        u.role,
+                        u.points.toLocaleString(),
+                        `${u.progress}%`,
+                        u.lastActive
+                    ]),
+                });
+
+                doc.save(`${fileName}.pdf`);
+            }
+
+        } catch (error) {
+            console.error("Export failed", error);
+            alert("Export failed. Please try again.");
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     return (
