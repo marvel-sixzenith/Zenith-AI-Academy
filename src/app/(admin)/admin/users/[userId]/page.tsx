@@ -43,6 +43,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             // Fetch separate submissions as they might not be directly linked to UserProgress in a simple way
             // or we want details
             quizSubmissions: {
+                orderBy: { completedAt: 'desc' },
                 include: { answers: true }
             },
             assignmentSubmissions: true
