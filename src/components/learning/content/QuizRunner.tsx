@@ -143,13 +143,8 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                     const sortedUser = [...userAns].sort().toString();
                     isCorrect = sortedCorrect === sortedUser;
                 }
-            } else if (qType === 'SHORT_ANSWER') {
-                if (typeof correctAns === 'string' && typeof userAns === 'string') {
-                    isCorrect = userAns.trim().toLowerCase() === correctAns.trim().toLowerCase();
-                }
-            } else if (qType === 'PARAGRAPH') {
-                // Logic: If user wrote something substantial (e.g. > 10 chars), mark correct
-                // or just participation check
+            } else if (qType === 'SHORT_ANSWER' || qType === 'PARAGRAPH') {
+                // Modified logic: As long as the user answers, it's correct (Participation based)
                 if (typeof userAns === 'string') {
                     isCorrect = userAns.trim().length > 0;
                 }
@@ -199,11 +194,7 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                         const sortedUser = [...ans].sort().toString();
                         isCorrect = sortedCorrect === sortedUser;
                     }
-                } else if (qType === 'SHORT_ANSWER') {
-                    if (typeof correctAns === 'string' && typeof ans === 'string') {
-                        isCorrect = ans.trim().toLowerCase() === correctAns.trim().toLowerCase();
-                    }
-                } else if (qType === 'PARAGRAPH') {
+                } else if (qType === 'SHORT_ANSWER' || qType === 'PARAGRAPH') {
                     if (typeof ans === 'string') isCorrect = ans.trim().length > 0;
                 }
 
