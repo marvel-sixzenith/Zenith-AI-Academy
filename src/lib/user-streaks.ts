@@ -25,7 +25,21 @@ export async function checkAndUpdateStreak(userId: string) {
         const daysDiff = differenceInCalendarDays(now, lastActive);
 
         if (daysDiff === 0) {
-            // Already active today, just update timestamp if needed (optional, but good for "last seen")
+            // Already active today
+            // FIX: If streak is 0 (new user or first activity), set it to 1
+            if (user.currentStreak === 0) {
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: {
+                        lastActiveAt: now,
+                        currentStreak: 1,
+                        longestStreak: Math.max(1, user.longestStreak)
+                    },
+                });
+                return { streak: 1, updated: true };
+            }
+
+            // Otherwise just update timestamp
             await prisma.user.update({
                 where: { id: userId },
                 data: { lastActiveAt: now },
