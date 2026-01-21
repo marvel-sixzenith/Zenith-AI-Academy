@@ -30,7 +30,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
                             id: true,
                             title: true,
                             pointsValue: true,
-                            contentType: true
+                            contentType: true,
+                            contentData: true
                         }
                     }
                 }
@@ -83,8 +84,14 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             ?.filter((a: any) => a.lessonId === p.lessonId)
             .sort((a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0];
 
+        // Ensure we pass the contentData down with the quizSubmission or separately
+        // We will modify the structure slightly to ensure contentData is accessible in the History Item
         return {
             ...p,
+            lesson: {
+                ...p.lesson,
+                contentData: p.lesson.contentData // Ensure it's passed explicitly if needed, though ...p.lesson handles it
+            },
             quizSubmission: quizSub,
             assignmentSubmission: assignmentSub
         };

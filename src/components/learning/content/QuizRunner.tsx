@@ -169,20 +169,23 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
         }
 
         if (!isPreviewMode) {
-            await saveProgress(finalScore, passed);
+            await saveProgress(finalScore, passed, finalAnswers);
         }
     };
 
-    const saveProgress = async (finalScore: number, isPassed: boolean) => {
+    const saveProgress = async (finalScore: number, isPassed: boolean, finalAnswers?: any[]) => {
         if (!lessonId) return;
         setIsCompleting(true);
         try {
+            // Use the provided finalAnswers or fall back to state (though state might be stale if called immediately)
+            const answersToSave = finalAnswers || allAnswers;
+
             // Use the dedicated quiz submission API to save answers!
             // Format answers for API
             // The API expects: { lessonId, score, totalQuestions, answers: [] }
             // Answers format: { questionId, questionText, selectedOption, isCorrect }
 
-            const formattedAnswers = allAnswers.map((ans, idx) => {
+            const formattedAnswers = answersToSave.map((ans, idx) => {
                 const q = questions[idx];
                 const qType = q.type || 'MULTIPLE_CHOICE';
                 const correctAns = q.correctAnswer;
@@ -206,12 +209,12 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
 
                 // Determine selected option label or value
                 let selectedOptionStr = '';
-                if (qType === 'MULTIPLE_CHOICE') {
-                    selectedOptionStr = q.options ? q.options[ans] : String(ans);
+                if (qType === 'MULTIPLE_CHOICE' || qType === 'DROPDOWN') {
+                    selectedOptionStr = (q.options && ans !== null && ans !== undefined) ? q.options[ans] : String(ans ?? '');
                 } else if (qType === 'CHECKBOXES' && Array.isArray(ans) && q.options) {
                     selectedOptionStr = ans.map((idx: number) => q.options![idx]).join(', ');
                 } else {
-                    selectedOptionStr = String(ans || '');
+                    selectedOptionStr = String(ans ?? '');
                 }
 
                 return {
