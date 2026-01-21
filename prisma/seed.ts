@@ -55,6 +55,32 @@ async function main() {
         'user'
     );
 
+    // 4. Default Channels
+    const channels = [
+        { name: 'General', description: 'General discussion for everyone', slug: 'general', isAdminOnly: false },
+        { name: 'Announcements', description: 'Official updates and news', slug: 'announcements', isAdminOnly: true },
+        { name: 'Help', description: 'Get help with your code or lessons', slug: 'help', isAdminOnly: false },
+        { name: 'Random', description: 'Off-topic conversations', slug: 'random', isAdminOnly: false },
+    ];
+
+    for (const channel of channels) {
+        await prisma.channel.upsert({
+            where: { slug: channel.slug },
+            update: {
+                name: channel.name,
+                description: channel.description,
+                isAdminOnly: channel.isAdminOnly
+            },
+            create: {
+                name: channel.name,
+                description: channel.description,
+                slug: channel.slug,
+                isAdminOnly: channel.isAdminOnly
+            }
+        });
+        console.log(`✅ Upserted channel: ${channel.name}`);
+    }
+
     console.log('🏁 Seeding finished.');
 }
 
