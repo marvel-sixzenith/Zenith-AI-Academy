@@ -78,18 +78,18 @@ export default function CreatePostForm({ channels }: { channels: Channel[] }) {
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         placeholder="Post title..."
-                        className="w-full bg-transparent text-xl font-bold placeholder-[var(--text-muted)] border-none focus:ring-0 px-0 py-2"
+                        className="w-full bg-transparent text-xl font-bold text-white placeholder-white/40 border-none focus:ring-0 px-0 py-2 outline-none"
                         required
                         autoFocus
                     />
 
-                    <div className="h-px w-full bg-[var(--border-color)]" />
+                    <div className="h-px w-full bg-white/10" />
 
                     <textarea
                         value={formData.content}
                         onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                         placeholder="Share your thoughts... (We'll automatically categorize this for you)"
-                        className="w-full bg-[var(--background-secondary)]/30 rounded-xl p-4 min-h-[120px] focus:ring-1 focus:ring-[var(--primary)] border-none resize-y placeholder-[var(--text-muted)]"
+                        className="w-full bg-white/5 text-white rounded-xl p-4 min-h-[120px] focus:ring-1 focus:ring-[var(--primary)] border border-white/10 resize-y placeholder-white/40"
                         required
                     />
 
@@ -97,7 +97,7 @@ export default function CreatePostForm({ channels }: { channels: Channel[] }) {
                         <button
                             type="button"
                             onClick={() => setIsExpanded(false)}
-                            className="btn-ghost"
+                            className="btn-ghost text-sm hover:bg-white/5"
                             disabled={isSubmitting}
                         >
                             Cancel

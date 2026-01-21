@@ -1,9 +1,18 @@
 'use client';
 
-import { MediaPlayer, MediaProvider } from '@vidstack/react';
-import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
-import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
+
+// Dynamically import ReactPlayer to avoid hydration mismatch issues
+const ReactPlayer = dynamic(() => import("react-player"), {
+    ssr: false,
+    loading: () => (
+        <div className="w-full h-full flex items-center justify-center bg-black/5">
+            <Loader2 className="w-8 h-8 text-[var(--text-muted)] animate-spin" />
+        </div>
+    )
+});
 
 interface VideoPlayerProps {
     youtubeUrl?: string;
@@ -12,6 +21,13 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoPlayerProps) {
+    const [hasMounted, setHasMounted] = useState(false);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
+
     // 1. Prioritize videoUrl (direct file), then youtubeUrl
     const rawSrc = videoUrl || youtubeUrl || "";
 
@@ -21,11 +37,17 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         src = `https://${src}`;
     }
 
-    const [error, setError] = useState(false);
+    if (!hasMounted) {
+        return (
+            <div className="w-full max-w-4xl mx-auto aspect-video bg-[var(--background-secondary)] rounded-xl animate-pulse flex items-center justify-center border border-[var(--border-color)]">
+                <Loader2 className="w-8 h-8 text-[var(--text-muted)] animate-spin" />
+            </div>
+        );
+    }
 
     if (!src) {
         return (
-            <div className="aspect-video bg-[var(--background-secondary)] rounded-2xl flex items-center justify-center border border-[var(--border-color)]">
+            <div className="w-full max-w-4xl mx-auto aspect-video bg-[var(--background-secondary)] rounded-2xl flex items-center justify-center border border-[var(--border-color)]">
                 <p className="text-[var(--text-muted)]">No video source provided</p>
             </div>
         );
@@ -33,7 +55,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
 
     if (error) {
         return (
-            <div className="aspect-video bg-[var(--background-secondary)] rounded-2xl flex flex-col items-center justify-center border border-red-500/20 gap-4">
+            <div className="w-full max-w-4xl mx-auto aspect-video bg-[var(--background-secondary)] rounded-2xl flex flex-col items-center justify-center border border-red-500/20 gap-4">
                 <p className="text-red-400 font-medium">Failed to load video</p>
                 <button
                     onClick={() => setError(false)}
@@ -47,29 +69,23 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
 
     return (
         <div className="w-full max-w-4xl mx-auto">
-            {/* 3. Container: removed 'overflow-hidden' which can clip controls in some layouts, but kept rounding */}
             <div className="group relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
-                <MediaPlayer
-                    title="Lesson Video"
-                    src={src}
-                    load="eager"
-                    crossOrigin
-                    playsInline
-                    onEnd={() => onComplete?.()}
-                    onError={(e) => {
+                <ReactPlayer
+                    url={src}
+                    width="100%"
+                    height="100%"
+                    controls={true}
+                    onEnded={() => onComplete?.()}
+                    onError={(e: any) => {
                         console.error("Video Error:", e);
                         setError(true);
                     }}
-                    // 4. Critical Fix: Force object-contain to prevent "Zoom" effect on iframes/videos
-                    className="w-full h-full [&_video]:object-contain [&_iframe]:subpixel-antialiased"
-                >
-                    <MediaProvider>
-                        {/* Poster mainly for direct videos, can be passed if we had a thumbnail property */}
-                    </MediaProvider>
-
-                    {/* Default Layout */}
-                    <DefaultVideoLayout icons={defaultLayoutIcons} />
-                </MediaPlayer>
+                    config={{
+                        youtube: {
+                            playerVars: { showinfo: 1 }
+                        }
+                    }}
+                />
             </div>
         </div>
     );
