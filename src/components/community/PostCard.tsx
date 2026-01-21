@@ -1,4 +1,8 @@
-import { MessageSquare, Pin, Lock } from 'lucide-react';
+"use client";
+
+import { useState } from 'react';
+import { MessageSquare, Pin, Lock, ChevronDown, ChevronUp } from 'lucide-react';
+import CommentSection from './CommentSection';
 
 interface Post {
     id: string;
@@ -19,6 +23,9 @@ interface Post {
 }
 
 export default function PostCard({ post }: { post: Post }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [commentCount, setCommentCount] = useState(post.comments.length);
+
     const formatTimeAgo = (date: Date) => {
         const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
         if (seconds < 60) return 'just now';
@@ -28,7 +35,7 @@ export default function PostCard({ post }: { post: Post }) {
     };
 
     return (
-        <div className="glass-card p-6 hover:scale-[1.01] transition">
+        <div className="glass-card p-6 transition">
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -68,12 +75,25 @@ export default function PostCard({ post }: { post: Post }) {
             </p>
 
             {/* Footer */}
-            <div className="flex items-center gap-4 text-sm text-[var(--text-muted)]">
-                <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4 text-sm text-[var(--text-muted)] border-t border-[var(--border-color)] pt-4 mt-4">
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="flex items-center gap-2 hover:text-[var(--primary)] transition"
+                >
                     <MessageSquare className="w-4 h-4" />
-                    <span>{post.comments.length} comments</span>
-                </div>
+                    <span>{commentCount} comments</span>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+                </button>
             </div>
+
+            {/* Comment Section */}
+            {isExpanded && (
+                <CommentSection
+                    postId={post.id}
+                    commentsLocked={post.commentsLocked}
+                    onCommentAdded={() => setCommentCount(prev => prev + 1)}
+                />
+            )}
         </div>
     );
 }
