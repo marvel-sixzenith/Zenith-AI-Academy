@@ -9,20 +9,24 @@ export async function POST(req: Request) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
-        const { lessonId, fileUrl, fileName } = await req.json();
+        const { lessonId, fileUrl, fileName, files, link, comment } = await req.json();
 
         if (!lessonId) {
             return new NextResponse('Missing required fields', { status: 400 });
         }
 
-        // 1. Create Assignment Submission Record (Optional if files are uploaded)
-        if (fileUrl) {
+        // 1. Create Assignment Submission Record
+        // Support both old (single file) and new (multi-file + link + comment) formats
+        if (files || link || comment || fileUrl) {
             await prisma.assignmentSubmission.create({
                 data: {
                     userId: session.user.id,
                     lessonId,
-                    fileUrl,
-                    fileName: fileName || 'Uploaded File',
+                    files: files || (fileUrl ? JSON.stringify([{ name: fileName || 'Uploaded File', url: fileUrl }]) : null),
+                    link,
+                    comment,
+                    fileUrl: fileUrl || null, // Backwards compatibility if needed, or just nullable
+                    fileName: fileName || null,
                     status: 'SUBMITTED'
                 }
             });

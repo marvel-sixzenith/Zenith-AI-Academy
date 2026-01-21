@@ -178,8 +178,11 @@ model AssignmentSubmission {
   id          String    @id @default(cuid())
   userId      String
   lessonId    String
-  fileUrl     String
-  fileName    String?
+  fileUrl     String?   // Deprecated: use files
+  fileName    String?   // Deprecated: use files
+  files       String?   // JSON string of [{url, name}]
+  link        String?   // External link
+  comment     String?   // Private comment
   submittedAt DateTime  @default(now())
   status      String    @default("SUBMITTED") // SUBMITTED, REVIEWED
 
