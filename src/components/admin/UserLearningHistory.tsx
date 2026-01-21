@@ -127,6 +127,8 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
 
                                     <div className="space-y-4">
                                         {(() => {
+                                            const submittedAnswers = selectedItem.quizSubmission?.answers || [];
+
                                             // Parse contentData to get full list of questions
                                             let questions: any[] = [];
                                             try {
@@ -140,23 +142,16 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                                                 console.error("Failed to parse lesson contentData", e);
                                             }
 
-                                            // If we have question data, use it as the source of truth
+                                            // If we have questions from contentData, use them as the source of truth
                                             if (questions.length > 0) {
                                                 return questions.map((q, idx) => {
-                                                    // Find matching answer
-                                                    // We try to match by question ID first, then fallback to index
-                                                    const answer = selectedItem.quizSubmission?.answers?.find((a, aIdx) => {
-                                                        if (a.questionId && q.id && a.questionId === q.id) return true;
-                                                        // Fallback: assume order matches if IDs don't match or are missing (legacy data)
-                                                        // BUT, be careful. If we rely on index, we must ensuring answer[idx] corresponds to question[idx]
-                                                        // The answers array might be partial if we had the bug.
-                                                        // So purely index based matching on the *answers* array is risky if lengths differ.
-                                                        // Better strategy: Use the index of the answer in the answers array? No, the answers array might be shorter.
-                                                        // We can only match by ID safely. If no ID, we might have to just show "Not Answered".
-                                                        // However, if the bug was "last answer not saved", then answers array length < questions array length.
-                                                        // So answers[idx] works for the first N questions provided they are in order.
-                                                        return false;
-                                                    }) || (selectedItem.quizSubmission?.answers ? selectedItem.quizSubmission.answers[idx] : undefined);
+                                                    // Find matching answer by questionId first, then by index position
+                                                    let answer = submittedAnswers.find(a => a.questionId && q.id && a.questionId === q.id);
+
+                                                    // Fallback: use index-based matching (answers submitted in order)
+                                                    if (!answer && submittedAnswers[idx]) {
+                                                        answer = submittedAnswers[idx];
+                                                    }
 
                                                     const isAnswered = !!answer;
                                                     const isCorrect = answer?.isCorrect || false;
@@ -164,18 +159,18 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                                                     const questionText = q.question || q.text || answer?.questionText || `Question ${idx + 1}`;
 
                                                     // Handle "Empty" case display
-                                                    const displaySelected = selectedOption === 'EMPTY' || !selectedOption || selectedOption === ''
+                                                    const displaySelected = !selectedOption || selectedOption === '' || selectedOption === 'EMPTY'
                                                         ? <span className="text-[var(--text-muted)] italic">No answer provided</span>
                                                         : <strong className={isCorrect ? 'text-green-500' : 'text-red-500'}>{selectedOption}</strong>;
 
                                                     return (
-                                                        <div key={idx} className={`p-4 rounded-xl border ${isAnswered ? (isCorrect ? 'border-green-500/20 bg-green-500/5' : 'border-red-500/20 bg-red-500/5') : 'border-[var(--border-color)] bg-[var(--background-secondary)]/10'}`}>
+                                                        <div key={idx} className={`p-4 rounded-xl border ${isAnswered && selectedOption ? (isCorrect ? 'border-green-500/20 bg-green-500/5' : 'border-red-500/20 bg-red-500/5') : 'border-[var(--border-color)] bg-[var(--background-secondary)]/10'}`}>
                                                             <p className="font-medium mb-2">{idx + 1}. {questionText}</p>
                                                             <div className="flex items-center justify-between text-sm">
                                                                 <span className="text-[var(--text-secondary)]">
                                                                     Selected: {displaySelected}
                                                                 </span>
-                                                                {isAnswered ? (
+                                                                {isAnswered && selectedOption ? (
                                                                     isCorrect ? (
                                                                         <CheckCircle className="w-5 h-5 text-green-500" />
                                                                     ) : (
@@ -188,27 +183,25 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                                                         </div>
                                                     );
                                                 });
-                                            } else {
-                                                // Fallback to existing behavior if no contentData (legacy support)
-                                                return selectedItem.quizSubmission.answers && selectedItem.quizSubmission.answers.length > 0 ? (
-                                                    selectedItem.quizSubmission.answers.map((answer, idx) => (
-                                                        <div key={idx} className={`p-4 rounded-xl border ${answer.isCorrect ? 'border-green-500/20 bg-green-500/5' : 'border-red-500/20 bg-red-500/5'}`}>
-                                                            <p className="font-medium mb-2">{idx + 1}. {answer.questionText}</p>
-                                                            <div className="flex items-center justify-between text-sm">
-                                                                <span className="text-[var(--text-secondary)]">
-                                                                    Selected: <strong className={answer.isCorrect ? 'text-green-500' : 'text-red-500'}>{answer.selectedOption}</strong>
-                                                                </span>
-                                                                {answer.isCorrect ? (
-                                                                    <CheckCircle className="w-5 h-5 text-green-500" />
-                                                                ) : (
-                                                                    <XCircle className="w-5 h-5 text-red-500" />
-                                                                )}
-                                                            </div>
+                                            } else if (submittedAnswers.length > 0) {
+                                                // Fallback to answers array directly if no contentData
+                                                return submittedAnswers.map((answer, idx) => (
+                                                    <div key={idx} className={`p-4 rounded-xl border ${answer.isCorrect ? 'border-green-500/20 bg-green-500/5' : 'border-red-500/20 bg-red-500/5'}`}>
+                                                        <p className="font-medium mb-2">{idx + 1}. {answer.questionText}</p>
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-[var(--text-secondary)]">
+                                                                Selected: <strong className={answer.isCorrect ? 'text-green-500' : 'text-red-500'}>{answer.selectedOption || 'N/A'}</strong>
+                                                            </span>
+                                                            {answer.isCorrect ? (
+                                                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                                            ) : (
+                                                                <XCircle className="w-5 h-5 text-red-500" />
+                                                            )}
                                                         </div>
-                                                    ))
-                                                ) : (
-                                                    <p className="text-center text-[var(--text-muted)] py-4">No answer details available.</p>
-                                                );
+                                                    </div>
+                                                ));
+                                            } else {
+                                                return <p className="text-center text-[var(--text-muted)] py-4">No answer details available.</p>;
                                             }
                                         })()}
                                     </div>
