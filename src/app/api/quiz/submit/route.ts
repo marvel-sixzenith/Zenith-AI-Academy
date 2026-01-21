@@ -15,6 +15,22 @@ export async function POST(req: Request) {
             return new NextResponse('Missing required fields', { status: 400 });
         }
 
+        // DEBUG: Write payload to file to verify what we received
+        try {
+            const fs = await import('fs');
+            const path = await import('path');
+            const debugPath = path.join(process.cwd(), 'debug_quiz_submission.json');
+            fs.writeFileSync(debugPath, JSON.stringify({
+                timestamp: new Date().toISOString(),
+                lessonId,
+                score,
+                answersCount: answers.length,
+                answersSample: answers.slice(0, 2)
+            }, null, 2));
+        } catch (e) {
+            console.error("Failed to write debug file", e);
+        }
+
         // 1. Create Quiz Submission Record
         const submission = await prisma.quizSubmission.create({
             data: {

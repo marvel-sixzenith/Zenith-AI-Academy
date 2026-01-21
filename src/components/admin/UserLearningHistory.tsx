@@ -142,6 +142,13 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                                                 console.error("Failed to parse lesson contentData", e);
                                             }
 
+                                            console.log("DEBUG QUIZ DISPLAY:", {
+                                                quizScore: selectedItem.quizSubmission?.score,
+                                                questionsFromContent: questions.map(q => ({ id: q.id, text: q.question || q.text })),
+                                                submittedAnswers: submittedAnswers.map(a => ({ qId: a.questionId, text: a.questionText, selected: a.selectedOption })),
+                                                rawSubmission: selectedItem.quizSubmission
+                                            });
+
                                             // If we have questions from contentData, use them as the source of truth
                                             if (questions.length > 0) {
                                                 return questions.map((q, idx) => {
