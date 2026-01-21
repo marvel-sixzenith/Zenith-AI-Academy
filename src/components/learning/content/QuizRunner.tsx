@@ -460,17 +460,28 @@ export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPrev
                     )}
 
                     {passed ? (
-                        <div className="relative space-y-3">
+                        <div className="relative space-y-4">
                             {isPreviewMode ? (
                                 <p className="text-amber-400 flex items-center justify-center gap-2">
                                     <CheckCircle className="w-5 h-5" />
                                     Preview mode - progress not saved
                                 </p>
-                            ) : !isCompleting && (
-                                <p className="text-emerald-400 flex items-center justify-center gap-2">
-                                    <CheckCircle className="w-5 h-5" />
-                                    Progress saved! Ready for the next lesson.
-                                </p>
+                            ) : (
+                                <>
+                                    {!isCompleting && (
+                                        <p className="text-emerald-400 flex items-center justify-center gap-2">
+                                            <CheckCircle className="w-5 h-5" />
+                                            Progress saved!
+                                        </p>
+                                    )}
+                                    <button
+                                        onClick={resetQuiz}
+                                        className="relative inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--background-secondary)] text-[var(--text-primary)] font-medium border border-[var(--border-color)] hover:bg-[var(--background-card)] hover:text-[var(--primary)] transition-all duration-200"
+                                    >
+                                        <RotateCcw className="w-4 h-4" />
+                                        Retry Quiz
+                                    </button>
+                                </>
                             )}
                         </div>
                     ) : (
