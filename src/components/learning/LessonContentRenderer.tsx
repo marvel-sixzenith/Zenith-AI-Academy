@@ -10,6 +10,7 @@ interface LessonContentRendererProps {
     lessonTitle?: string;
     isPreviewMode?: boolean;
     currentSubmission?: any;
+    userProgress?: any;
 }
 
 export default function LessonContentRenderer({
@@ -18,7 +19,8 @@ export default function LessonContentRenderer({
     lessonId,
     lessonTitle,
     isPreviewMode = false,
-    currentSubmission
+    currentSubmission,
+    userProgress
 }: LessonContentRendererProps) {
     if (!contentData) return null;
 
@@ -46,8 +48,8 @@ export default function LessonContentRenderer({
                     lessonId={lessonId}
                     lessonTitle={lessonTitle}
                     isPreviewMode={isPreviewMode}
-                    initialScore={currentSubmission?.quizScore}
-                    isCompleted={currentSubmission?.status === 'COMPLETED'}
+                    initialScore={userProgress?.quizScore}
+                    isCompleted={userProgress?.status === 'COMPLETED'}
                 />
             );
 

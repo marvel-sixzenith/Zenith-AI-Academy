@@ -93,6 +93,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             lessonTitle={lesson.title}
                             isPreviewMode={isAdmin}
                             currentSubmission={lesson.currentSubmission}
+                            userProgress={lesson.userProgress}
                         />
                     </div>
 
