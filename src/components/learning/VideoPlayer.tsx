@@ -1,3 +1,4 @@
+'use client';
 import { useRef, useEffect, useState } from 'react'; // Added useState
 import { MediaPlayer, MediaProvider } from '@vidstack/react';
 import type { MediaPlayerInstance } from '@vidstack/react';
