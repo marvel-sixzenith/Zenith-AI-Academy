@@ -46,6 +46,8 @@ export default function LessonContentRenderer({
                     lessonId={lessonId}
                     lessonTitle={lessonTitle}
                     isPreviewMode={isPreviewMode}
+                    initialScore={currentSubmission?.quizScore}
+                    isCompleted={currentSubmission?.status === 'COMPLETED'}
                 />
             );
 
@@ -54,9 +56,7 @@ export default function LessonContentRenderer({
                 <AssignmentView
                     data={contentData}
                     lessonId={lessonId!}
-                    currentSubmission={contentData.currentSubmission} // This might be wrong, currentSubmission comes from lesson wrapper not contentData
-                // Wait, getLessonById merges currentSubmission into the returned object, NOT into contentData.
-                // I need to update Props.
+                    currentSubmission={currentSubmission}
                 />
             );
 

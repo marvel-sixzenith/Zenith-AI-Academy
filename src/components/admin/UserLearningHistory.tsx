@@ -26,8 +26,11 @@ interface LearningHistoryItem {
         }[];
     } | null;
     assignmentSubmission?: {
-        fileUrl: string;
-        fileName: string;
+        fileUrl?: string; // Optional legacy
+        fileName?: string; // Optional legacy
+        files?: string;   // New JSON string
+        link?: string;
+        comment?: string;
         submittedAt: Date;
     } | null;
 }
@@ -216,24 +219,85 @@ export default function UserLearningHistory({ history }: UserLearningHistoryProp
                             )}
 
                             {selectedItem.assignmentSubmission && (
-                                <div className="text-center py-8">
-                                    <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--primary)]">
-                                        <FileText className="w-8 h-8" />
-                                    </div>
-                                    <h4 className="text-lg font-bold mb-2 break-all">{selectedItem.assignmentSubmission.fileName}</h4>
-                                    <p className="text-[var(--text-muted)] mb-6">
+                                <div className="text-center py-6 space-y-6">
+                                    {/* Files Section */}
+                                    {(() => {
+                                        let files: { name: string; url: string }[] = [];
+                                        try {
+                                            // Try new files JSON first
+                                            if (selectedItem.assignmentSubmission.files) {
+                                                files = JSON.parse(selectedItem.assignmentSubmission.files);
+                                            }
+                                            // Fallback to legacy single file
+                                            else if (selectedItem.assignmentSubmission.fileUrl) {
+                                                files = [{
+                                                    name: selectedItem.assignmentSubmission.fileName || 'Assignment File',
+                                                    url: selectedItem.assignmentSubmission.fileUrl
+                                                }];
+                                            }
+                                        } catch (e) {
+                                            console.error("Failed to parse files JSON", e);
+                                        }
+
+                                        return files.map((file, idx) => (
+                                            <div key={idx} className="bg-[var(--background-secondary)]/30 rounded-xl p-4 flex items-center justify-between group hover:bg-[var(--background-secondary)]/50 transition">
+                                                <div className="flex items-center gap-3 min-w-0 text-left">
+                                                    <div className="w-10 h-10 bg-[var(--primary)]/10 rounded-lg flex items-center justify-center text-[var(--primary)] shrink-0">
+                                                        <FileText className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium truncate max-w-[200px]">{file.name}</p>
+                                                        <p className="text-xs text-[var(--text-muted)]">Attachment</p>
+                                                    </div>
+                                                </div>
+                                                <a
+                                                    href={file.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 rounded-lg hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] text-[var(--text-muted)] transition"
+                                                    title="View/Download"
+                                                >
+                                                    <Download className="w-5 h-5" />
+                                                </a>
+                                            </div>
+                                        ));
+                                    })()}
+
+                                    {/* Link Section */}
+                                    {selectedItem.assignmentSubmission.link && (
+                                        <div className="bg-[var(--background-secondary)]/30 rounded-xl p-4 flex items-center justify-between group hover:bg-[var(--background-secondary)]/50 transition">
+                                            <div className="flex items-center gap-3 min-w-0 text-left">
+                                                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 shrink-0">
+                                                    <Eye className="w-5 h-5" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-medium truncate max-w-[200px]">{selectedItem.assignmentSubmission.link}</p>
+                                                    <p className="text-xs text-[var(--text-muted)]">External Link</p>
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={selectedItem.assignmentSubmission.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 rounded-lg hover:bg-blue-500/10 hover:text-blue-500 text-[var(--text-muted)] transition"
+                                                title="Open Link"
+                                            >
+                                                <Eye className="w-5 h-5" />
+                                            </a>
+                                        </div>
+                                    )}
+
+                                    {/* Comment Section */}
+                                    {selectedItem.assignmentSubmission.comment && (
+                                        <div className="bg-[var(--background-secondary)]/30 rounded-xl p-4 text-left">
+                                            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-2">Private Comment</p>
+                                            <p className="text-sm italic text-[var(--text-secondary)]">"{selectedItem.assignmentSubmission.comment}"</p>
+                                        </div>
+                                    )}
+
+                                    <p className="text-[var(--text-muted)] text-sm pt-4 border-t border-[var(--border-color)]">
                                         Submitted on {new Date(selectedItem.assignmentSubmission.submittedAt).toLocaleString()}
                                     </p>
-
-                                    <a
-                                        href={selectedItem.assignmentSubmission.fileUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="btn-primary inline-flex items-center gap-2"
-                                    >
-                                        <Download className="w-5 h-5" />
-                                        Download File
-                                    </a>
                                 </div>
                             )}
                         </div>

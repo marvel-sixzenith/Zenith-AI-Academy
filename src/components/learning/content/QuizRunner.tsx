@@ -25,16 +25,25 @@ interface QuizRunnerProps {
     lessonId?: string;
     lessonTitle?: string;
     isPreviewMode?: boolean;
+    initialScore?: number;
+    isCompleted?: boolean;
 }
 
-export default function QuizRunner({ data, onPass, lessonId, lessonTitle, isPreviewMode = false }: QuizRunnerProps) {
+export default function QuizRunner({
+    data,
+    onPass,
+    lessonId,
+    lessonTitle,
+    isPreviewMode = false,
+    initialScore,
+    isCompleted: initialCompleted = false
+}: QuizRunnerProps) {
     const router = useRouter();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    // Answers state now needs to hold different types
     const [currentAnswer, setCurrentAnswer] = useState<any>(null);
-    const [allAnswers, setAllAnswers] = useState<any[]>([]); // Array of user answers
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [score, setScore] = useState(0);
+    const [allAnswers, setAllAnswers] = useState<any[]>([]);
+    const [isSubmitted, setIsSubmitted] = useState(initialCompleted);
+    const [score, setScore] = useState(initialScore || 0);
     const [isCompleting, setIsCompleting] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
 

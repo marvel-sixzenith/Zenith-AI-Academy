@@ -298,31 +298,20 @@ export default function YourWorkCard({ lessonId, onComplete, currentSubmission }
                                 </button>
                             </div>
                         ) : (
-                            <div className={`relative ${isMenuOpen ? 'z-50' : ''}`}>
-                                <button
-                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    className="btn-secondary w-full flex items-center justify-center gap-2 py-2"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Add or create
-                                </button>
+                            <div className="grid grid-cols-2 gap-3">
+                                <label className="btn-secondary flex items-center justify-center gap-2 py-2 cursor-pointer hover:bg-[var(--background-secondary)] transition-colors">
+                                    <Upload className="w-4 h-4 text-[var(--primary)]" />
+                                    <span>File</span>
+                                    <input type="file" multiple className="hidden" onChange={handleFileSelect} />
+                                </label>
 
-                                {isMenuOpen && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl shadow-lg overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-200">
-                                        <label className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--background-secondary)] cursor-pointer transition-colors">
-                                            <Upload className="w-4 h-4 text-[var(--text-muted)]" />
-                                            <span className="text-sm font-medium">File</span>
-                                            <input type="file" multiple className="hidden" onChange={handleFileSelect} />
-                                        </label>
-                                        <button
-                                            onClick={() => { setShowLinkInput(true); setIsMenuOpen(false); }}
-                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--background-secondary)] cursor-pointer transition-colors text-left"
-                                        >
-                                            <ExternalLink className="w-4 h-4 text-[var(--text-muted)]" />
-                                            <span className="text-sm font-medium">Link</span>
-                                        </button>
-                                    </div>
-                                )}
+                                <button
+                                    onClick={() => setShowLinkInput(true)}
+                                    className="btn-secondary flex items-center justify-center gap-2 py-2 hover:bg-[var(--background-secondary)] transition-colors"
+                                >
+                                    <ExternalLink className="w-4 h-4 text-blue-500" />
+                                    <span>Link</span>
+                                </button>
                             </div>
                         )}
 

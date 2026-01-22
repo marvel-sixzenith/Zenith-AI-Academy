@@ -79,11 +79,7 @@ export default function PrivateCommentSection({ lessonId, existingComment }: Pri
 
                 <div className={`relative transition-all ${isFocused ? 'ring-2 ring-[var(--primary)]/20 rounded-xl' : ''}`}>
                     <div className="flex items-start gap-2">
-                        {isFocused && (
-                            <button className="p-2 rounded-full bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--primary)]">
-                                <Lock className="w-4 h-4" />
-                            </button>
-                        )}
+                        {/* Removed Lock Icon to avoid confusion */}
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
@@ -96,8 +92,8 @@ export default function PrivateCommentSection({ lessonId, existingComment }: Pri
                             onClick={handleSend}
                             disabled={!comment.trim() || isSubmitting || comment === savedComment}
                             className={`p-2 rounded-full transition-colors ${comment.trim() && comment !== savedComment
-                                    ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90'
-                                    : 'bg-[var(--background-secondary)] text-[var(--text-muted)]'
+                                ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90'
+                                : 'bg-[var(--background-secondary)] text-[var(--text-muted)]'
                                 }`}
                         >
                             <Send className="w-4 h-4" />
