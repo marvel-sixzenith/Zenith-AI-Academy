@@ -28,8 +28,16 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     // 2. Format URL
     let src = rawSrc;
     // Add https to youtube links if missing
-    if (src && !src.startsWith('http') && (src.includes('youtube.com') || src.includes('youtu.be'))) {
-        src = `https://${src}`;
+    if (src && !src.startsWith('http')) {
+        if (src.includes('youtube.com') || src.includes('youtu.be')) {
+            src = `https://${src}`;
+        }
+    }
+
+    // 3. Force youtube-nocookie for privacy/Brave support
+    if (src && (src.includes('youtube.com') || src.includes('youtu.be'))) {
+        src = src.replace('youtube.com', 'youtube-nocookie.com')
+            .replace('youtu.be', 'youtube-nocookie.com');
     }
 
     if (!mounted) {
