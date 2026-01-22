@@ -6,8 +6,16 @@ import { redirect } from 'next/navigation';
 import CreatePostForm from '@/components/community/CreatePostForm';
 import PostCard from '@/components/community/PostCard';
 
-export default async function CommunityPage() {
+interface CommunityPageProps {
+    searchParams: Promise<{
+        channelId?: string;
+    }>;
+}
+
+export default async function CommunityPage(props: CommunityPageProps) {
+    const searchParams = await props.searchParams;
     const session = await auth();
+    const channelId = searchParams?.channelId;
 
     if (!session?.user) {
         redirect('/login');
@@ -19,6 +27,7 @@ export default async function CommunityPage() {
             orderBy: { name: 'asc' },
         }),
         prisma.post.findMany({
+            where: channelId ? { channelId } : undefined,
             orderBy: [
                 { isPinned: 'desc' },
                 { createdAt: 'desc' },
@@ -89,16 +98,33 @@ export default async function CommunityPage() {
                     <div className="glass-card p-4">
                         <h3 className="font-bold mb-4">Channels</h3>
                         <div className="space-y-2">
+                            <Link
+                                href="/community"
+                                className={`block p-2 rounded-lg cursor-pointer transition ${!channelId
+                                    ? 'bg-[var(--primary)]/10 text-[var(--primary)] font-medium'
+                                    : 'hover:bg-[var(--background-card)]'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span className="text-sm">All Posts</span>
+                                </div>
+                            </Link>
+
                             {channels.map((channel) => (
-                                <div
+                                <Link
                                     key={channel.id}
-                                    className="p-2 rounded-lg hover:bg-[var(--background-card)] cursor-pointer transition"
+                                    href={`/community?channelId=${channel.id}`}
+                                    className={`block p-2 rounded-lg cursor-pointer transition ${channelId === channel.id
+                                        ? 'bg-[var(--primary)]/10 text-[var(--primary)] font-medium'
+                                        : 'hover:bg-[var(--background-card)]'
+                                        }`}
                                 >
                                     <div className="flex items-center gap-2">
                                         <MessageSquare className="w-4 h-4" />
                                         <span className="text-sm">{channel.name}</span>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>
