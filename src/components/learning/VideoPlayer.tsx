@@ -53,6 +53,11 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
             <MediaPlayer
                 ref={player}
                 src={src}
+                title="Lesson Video"
+                viewType="video"
+                playsInline
+                crossOrigin="anonymous"
+                storage="video-player-storage"
                 onEnd={() => onComplete?.()}
                 className="w-full h-full"
             >
