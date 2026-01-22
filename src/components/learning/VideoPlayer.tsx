@@ -56,12 +56,43 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     }
 
     // fallback for YouTube to avoid "Sign in" bot error in Brave
+    // We use a "Facade" pattern: Show thumbnail first, load iframe only on click.
+    // This prevents the bot check from triggering on initial page load.
+    const [showYoutube, setShowYoutube] = useState(false);
+
     if (isYoutube) {
+        if (!showYoutube) {
+            return (
+                <div
+                    className="w-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-black aspect-video relative group cursor-pointer"
+                    onClick={() => setShowYoutube(true)}
+                >
+                    <img
+                        src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
+                        alt="Video thumbnail"
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                        onError={(e) => {
+                            // Fallback to hqdefault if maxres doesn't exist
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+                        }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                            <svg className="w-8 h-8 text-white fill-current" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div className="w-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-black aspect-video">
                 <iframe
                     className="w-full h-full"
-                    src={`https://www.youtube-nocookie.com/embed/${youtubeId}?modestbranding=1&rel=0`}
+                    src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&modestbranding=1&rel=0`}
                     title="YouTube video player"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     referrerPolicy="strict-origin-when-cross-origin"
