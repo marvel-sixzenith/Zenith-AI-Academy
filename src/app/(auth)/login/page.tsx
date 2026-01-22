@@ -33,6 +33,20 @@ function LoginForm() {
         }
     }, [searchParams]);
 
+    // Fix for stuck loading state when navigating back involves BFCache
+    useEffect(() => {
+        const handlePageShow = (event: PageTransitionEvent) => {
+            if (event.persisted) {
+                setIsLoading(false);
+            }
+        };
+
+        window.addEventListener('pageshow', handlePageShow);
+        return () => {
+            window.removeEventListener('pageshow', handlePageShow);
+        };
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
