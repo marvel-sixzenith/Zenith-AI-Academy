@@ -53,7 +53,6 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
             <MediaPlayer
                 ref={player}
                 src={src}
-                aspectRatio="16/9"
                 onEnd={() => onComplete?.()}
                 className="w-full h-full"
             >
