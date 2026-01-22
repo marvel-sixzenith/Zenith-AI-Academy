@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useEffect, useState } from 'react'; // Added useState
+import { useRef, useEffect, useState } from 'react';
 import { MediaPlayer, MediaProvider } from '@vidstack/react';
 import type { MediaPlayerInstance } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
@@ -25,19 +25,18 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     // Vidstack handles youtube/file automatically via `src` prop
     const rawSrc = videoUrl || youtubeUrl || "";
 
-    // 2. Format URL
-    let src = rawSrc;
-    // Add https to youtube links if missing
-    if (src && !src.startsWith('http')) {
-        if (src.includes('youtube.com') || src.includes('youtu.be')) {
-            src = `https://${src}`;
-        }
-    }
+    // 2. Determine if it's a YouTube link
+    let isYoutube = false;
+    let youtubeId = "";
 
-    // 3. Force youtube-nocookie for privacy/Brave support
-    if (src && (src.includes('youtube.com') || src.includes('youtu.be'))) {
-        src = src.replace('youtube.com', 'youtube-nocookie.com')
-            .replace('youtu.be', 'youtube-nocookie.com');
+    if (rawSrc) {
+        // Regex to extract YouTube ID
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = rawSrc.match(regExp);
+        if (match && match[2].length === 11) {
+            isYoutube = true;
+            youtubeId = match[2];
+        }
     }
 
     if (!mounted) {
@@ -48,7 +47,7 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         );
     }
 
-    if (!src) {
+    if (!rawSrc) {
         return (
             <div className="w-full max-w-4xl mx-auto aspect-video bg-[var(--background-secondary)] rounded-2xl flex items-center justify-center border border-[var(--border-color)]">
                 <p className="text-[var(--text-muted)]">No video source provided</p>
@@ -56,14 +55,31 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
         );
     }
 
+    // fallback for YouTube to avoid "Sign in" bot error in Brave
+    if (isYoutube) {
+        return (
+            <div className="w-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-black aspect-video">
+                <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube-nocookie.com/embed/${youtubeId}?modestbranding=1&rel=0`}
+                    title="YouTube video player"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                ></iframe>
+            </div>
+        )
+    }
+
     return (
         <div className="w-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-black">
             <MediaPlayer
+                key={rawSrc}
                 ref={player}
-                src={src}
+                src={rawSrc}
                 title="Lesson Video"
-                viewType="video"
                 playsInline
+                load="eager"
                 crossOrigin="anonymous"
                 storage="video-player-storage"
                 onEnd={() => onComplete?.()}
