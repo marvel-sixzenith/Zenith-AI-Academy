@@ -16,6 +16,7 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoPlayerProps) {
     const player = useRef<MediaPlayerInstance>(null);
     const [mounted, setMounted] = useState(false); // Fix hydration mismatch
+    const [showYoutube, setShowYoutube] = useState(false); // Facade state
 
     useEffect(() => {
         setMounted(true);
@@ -58,7 +59,6 @@ export default function VideoPlayer({ youtubeUrl, videoUrl, onComplete }: VideoP
     // fallback for YouTube to avoid "Sign in" bot error in Brave
     // We use a "Facade" pattern: Show thumbnail first, load iframe only on click.
     // This prevents the bot check from triggering on initial page load.
-    const [showYoutube, setShowYoutube] = useState(false);
 
     if (isYoutube) {
         if (!showYoutube) {
