@@ -1,21 +1,13 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-    },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendPasswordResetEmail(email: string, token: string) {
     const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 
     try {
-        await transporter.sendMail({
-            from: process.env.SMTP_FROM || '"Zenith AI Academy" <noreply@zenithai.com>',
+        await resend.emails.send({
+            from: 'Zenith AI Academy <onboarding@resend.dev>', // Or your verified domain
             to: email,
             subject: 'Reset Password - Zenith AI Academy',
             html: `
@@ -25,15 +17,15 @@ export async function sendPasswordResetEmail(email: string, token: string) {
             </div>
             <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; background-color: #ffffff;">
                 <h2 style="margin-top: 0;">Reset Password</h2>
-                <p>Anda menerima email ini karena ada permintaan reset password untuk akun Anda.</p>
-                <p>Klik tombol di bawah ini untuk membuat password baru:</p>
+                <p>You received this email because of a password reset request.</p>
+                <p>Click the button below to set a new password:</p>
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="${resetLink}" style="background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                         Reset Password
                     </a>
                 </div>
-                <p>Tautan ini akan kedaluwarsa dalam 1 jam.</p>
-                <p style="color: #6b7280; font-size: 14px;">Jika Anda tidak meminta reset password, Anda dapat mengabaikan email ini dengan aman.</p>
+                <p>This link expires in 1 hour.</p>
+                <p style="color: #6b7280; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
             </div>
         </div>
       `,
