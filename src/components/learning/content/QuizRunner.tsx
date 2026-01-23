@@ -16,10 +16,20 @@ interface Question {
     correctAnswer?: number | number[] | string;
 }
 
+interface QuizSettings {
+    passingScore?: number;
+    showScoreImmediate?: boolean;
+    shuffleQuestions?: boolean;
+    requireAll?: boolean;
+    allowRetries?: boolean;
+    maxRetries?: number;
+}
+
 interface QuizRunnerProps {
     data: {
         questions: Question[];
-        passing_score: number;
+        passing_score?: number;
+        settings?: QuizSettings;
     };
     onPass?: () => void;
     lessonId?: string;
@@ -47,10 +57,35 @@ export default function QuizRunner({
     const [isCompleting, setIsCompleting] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
 
-    const questions = data?.questions || [];
+    // Settings with defaults
+    const settings = {
+        passingScore: data.settings?.passingScore ?? data.passing_score ?? 70,
+        showScoreImmediate: data.settings?.showScoreImmediate ?? true,
+        shuffleQuestions: data.settings?.shuffleQuestions ?? false,
+        requireAll: data.settings?.requireAll ?? true,
+        allowRetries: data.settings?.allowRetries ?? true,
+        maxRetries: data.settings?.maxRetries ?? 3
+    };
+
+    const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
+    const [retryCount, setRetryCount] = useState(0);
+
+    // Initialize Questions (Shuffle if needed)
+    useEffect(() => {
+        let q = [...(data?.questions || [])];
+        if (settings.shuffleQuestions && !isSubmitted) {
+            // Simple Fisher-Yates shuffle
+            for (let i = q.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [q[i], q[j]] = [q[j], q[i]];
+            }
+        }
+        setShuffledQuestions(q);
+    }, [data, settings.shuffleQuestions, isSubmitted]);
+
+    const questions = shuffledQuestions;
     const currentQuestion = questions[currentQuestionIndex];
 
-    // Ensure type defaults to MC if missing
     const currentType = currentQuestion?.type || 'MULTIPLE_CHOICE';
 
     if (!questions || questions.length === 0) {
@@ -91,15 +126,17 @@ export default function QuizRunner({
     };
 
     const handleNext = () => {
-        // Validation before next
-        if (currentType === 'CHECKBOXES' && (!currentAnswer || (Array.isArray(currentAnswer) && currentAnswer.length === 0))) return;
+        // Validation check
+        const isAnswered = () => {
+            if (currentType === 'CHECKBOXES') return currentAnswer && (Array.isArray(currentAnswer) && currentAnswer.length > 0);
+            if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') return typeof currentAnswer === 'string' && currentAnswer.trim().length > 0;
+            return currentAnswer !== null;
+        };
 
-        // Safety check for string types: ensure it is actually a string before trim
-        if ((currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH')) {
-            if (typeof currentAnswer !== 'string' || !currentAnswer.trim()) return;
+        if (settings.requireAll && !isAnswered()) {
+            toast.error("Please answer this question to proceed.");
+            return;
         }
-
-        if ((currentType === 'MULTIPLE_CHOICE' || currentType === 'DROPDOWN') && currentAnswer === null) return;
 
         const newAllAnswers = [...allAnswers];
         newAllAnswers[currentQuestionIndex] = currentAnswer;
@@ -185,7 +222,7 @@ export default function QuizRunner({
         setScore(finalScore);
         setIsSubmitted(true);
 
-        const passed = finalScore >= data.passing_score;
+        const passed = finalScore >= settings.passingScore;
 
         if (passed) {
             onPass?.();
@@ -427,6 +464,8 @@ export default function QuizRunner({
     };
 
     const isNextDisabled = () => {
+        if (!settings.requireAll) return false;
+
         if (currentType === 'CHECKBOXES') return !currentAnswer || (currentAnswer as number[]).length === 0;
         if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') {
             return typeof currentAnswer !== 'string' || !currentAnswer.trim();
@@ -437,91 +476,79 @@ export default function QuizRunner({
     // --- MAIN RENDER ---
 
     if (isSubmitted) {
-        const passed = score >= data.passing_score;
+        // Use settings.passingScore which has a default of 70
+        const passed = score >= settings.passingScore;
         const correctAnswers = Math.round((score / 100) * questions.length);
 
         return (
             <div className="max-w-2xl mx-auto">
-                {/* Results Card */}
-                <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 text-center ${passed
-                    ? 'bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-teal-500/10 border border-emerald-500/20'
-                    : 'bg-gradient-to-br from-rose-500/10 via-red-500/5 to-pink-500/10 border border-rose-500/20'
-                    }`}>
-                    <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl ${passed ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`} />
-                    <div className={`absolute -bottom-20 -left-20 w-40 h-40 rounded-full blur-3xl ${passed ? 'bg-teal-500/20' : 'bg-pink-500/20'}`} />
+                <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 text-center border ${passed
+                    ? 'bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-teal-500/10 border-emerald-500/20'
+                    : 'bg-gradient-to-br from-rose-500/10 via-red-500/5 to-pink-500/10 border-rose-500/20'}`}>
 
-                    <div className={`relative w-28 h-28 mx-auto mb-6 rounded-full flex items-center justify-center ${passed
-                        ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/30'
-                        : 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-lg shadow-rose-500/30'
-                        }`}>
-                        {passed ? <Award className="w-14 h-14 text-white" /> : <Target className="w-14 h-14 text-white" />}
+                    <div className={`active w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center ${passed
+                        ? 'bg-emerald-500/20 text-emerald-500'
+                        : 'bg-rose-500/20 text-rose-500'}`}>
+                        {passed ? <Award className="w-12 h-12" /> : <Target className="w-12 h-12" />}
                     </div>
 
-                    <h2 className="relative text-3xl md:text-4xl font-bold mb-2">
-                        {passed ? 'Excellent Work!' : 'Keep Practicing!'}
-                    </h2>
-                    <p className="relative text-[var(--text-secondary)] mb-8">
-                        {passed ? "You've demonstrated mastery of this topic." : "Review the material and try again."}
-                    </p>
+                    <h2 className="text-3xl font-bold mb-4">{passed ? 'Quiz Completed!' : 'Quiz Submitted'}</h2>
 
-                    <div className="relative flex items-center justify-center gap-8 mb-8">
-                        <div className="text-center">
-                            <div className={`text-5xl font-bold ${passed ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {score.toFixed(0)}%
+                    {settings.showScoreImmediate ? (
+                        <>
+                            <div className="text-5xl font-bold mb-2">{score.toFixed(0)}%</div>
+                            <p className="text-[var(--text-muted)] mb-8">
+                                {passed ? 'Great job! You have passed.' : `You need ${settings.passingScore}% to pass.`}
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-4 mb-8">
+                                <div className="p-4 rounded-2xl bg-[var(--background-secondary)]/50">
+                                    <div className="text-2xl font-bold text-[var(--text-primary)]">{correctAnswers}</div>
+                                    <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Correct</div>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-[var(--background-secondary)]/50">
+                                    <div className="text-2xl font-bold text-[var(--text-primary)]">{questions.length}</div>
+                                    <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Total</div>
+                                </div>
                             </div>
-                            <div className="text-sm text-[var(--text-muted)] mt-1">Your Score</div>
-                        </div>
-                        <div className="w-px h-16 bg-[var(--border-color)]" />
-                        <div className="text-center">
-                            <div className="text-5xl font-bold text-[var(--text-secondary)]">
-                                {correctAnswers}/{questions.length}
-                            </div>
-                            <div className="text-sm text-[var(--text-muted)] mt-1">Correct</div>
-                        </div>
-                    </div>
+                        </>
+                    ) : (
+                        <p className="text-[var(--text-secondary)] mb-8">
+                            Your answers have been submitted for review.
+                        </p>
+                    )}
 
                     {isCompleting && (
-                        <div className="flex items-center justify-center gap-2 mb-4 animate-pulse">
-                            <Sparkles className="w-5 h-5" />
-                            <span>Saving your progress...</span>
+                        <div className="flex items-center justify-center gap-2 mb-6 animate-pulse text-[var(--primary)]">
+                            <Sparkles className="w-4 h-4" />
+                            <span>Saving results...</span>
                         </div>
                     )}
 
-                    {passed ? (
-                        <div className="relative space-y-4">
-                            {isPreviewMode ? (
-                                <p className="text-amber-400 flex items-center justify-center gap-2">
-                                    <CheckCircle className="w-5 h-5" />
-                                    Preview mode - progress not saved
-                                </p>
-                            ) : (
-                                <>
-                                    {!isCompleting && (
-                                        <p className="text-emerald-400 flex items-center justify-center gap-2">
-                                            <CheckCircle className="w-5 h-5" />
-                                            Progress saved!
-                                        </p>
-                                    )}
-                                    <button
-                                        onClick={resetQuiz}
-                                        className="relative inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--background-secondary)] text-[var(--text-primary)] font-medium border border-[var(--border-color)] hover:bg-[var(--background-card)] hover:text-[var(--primary)] transition-all duration-200"
-                                    >
-                                        <RotateCcw className="w-4 h-4" />
-                                        Retry Quiz
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        <button
-                            onClick={resetQuiz}
-                            disabled={isCompleting}
-                            className={`relative inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/30 hover:scale-105 transition-all duration-300 ${isCompleting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <RotateCcw className="w-5 h-5" />
-                            Try Again
-                        </button>
-                    )}
+                    <div className="flex justify-center gap-4">
+                        {(settings.allowRetries && (retryCount < settings.maxRetries || settings.maxRetries === 0)) && !passed && (
+                            <button
+                                onClick={() => {
+                                    resetQuiz();
+                                    setRetryCount(prev => prev + 1);
+                                }}
+                                disabled={isCompleting}
+                                className="btn-primary"
+                            >
+                                <RotateCcw className="w-4 h-4 mr-2" />
+                                Try Again ({settings.maxRetries - retryCount} left)
+                            </button>
+                        )}
+
+                        {(passed || (!settings.allowRetries || retryCount >= settings.maxRetries)) && (
+                            <button
+                                onClick={() => router.push(`/lessons/${lessonId}/next`)}
+                                className="btn-secondary"
+                            >
+                                Continue
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         );
