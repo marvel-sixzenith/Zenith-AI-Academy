@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import LessonContentRenderer from '@/components/learning/LessonContentRenderer';
 import LessonCompleteButton from '@/components/learning/LessonCompleteButton';
+import LessonUpdateWatcher from '@/components/learning/LessonUpdateWatcher';
 import { getLessonById } from '@/lib/lessons';
 
 interface LessonPageProps {
@@ -83,6 +84,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <div className="flex gap-6 flex-col lg:flex-row">
                 {/* Main Content */}
                 <div className="flex-1">
+
+                    {/* Real-time Update Watcher */}
+                    <LessonUpdateWatcher
+                        lessonId={lessonId}
+                        initialUpdatedAt={lesson.updatedAt}
+                    />
 
                     {/* Content Renderer */}
                     <div className="mb-8">

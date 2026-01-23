@@ -133,7 +133,9 @@ export default async function CommunityPage(props: CommunityPageProps) {
                 {/* Posts Feed */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* Create Post */}
-                    <CreatePostForm channels={channels} />
+                    <CreatePostForm
+                        channels={channels.filter(c => !c.isAdminOnly || session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN')}
+                    />
 
                     {/* Posts List */}
                     <div className="space-y-4">
