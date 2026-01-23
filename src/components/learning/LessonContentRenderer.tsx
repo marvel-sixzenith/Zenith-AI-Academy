@@ -11,6 +11,7 @@ interface LessonContentRendererProps {
     isPreviewMode?: boolean;
     currentSubmission?: any;
     userProgress?: any;
+    navigation?: any; // Passed for custom layout handling (e.g. Assignment)
 }
 
 export default function LessonContentRenderer({
@@ -20,7 +21,8 @@ export default function LessonContentRenderer({
     lessonTitle,
     isPreviewMode = false,
     currentSubmission,
-    userProgress
+    userProgress,
+    navigation
 }: LessonContentRendererProps) {
     if (!contentData) return null;
 
@@ -59,6 +61,7 @@ export default function LessonContentRenderer({
                     data={contentData}
                     lessonId={lessonId!}
                     currentSubmission={currentSubmission}
+                    navigation={navigation}
                 />
             );
 

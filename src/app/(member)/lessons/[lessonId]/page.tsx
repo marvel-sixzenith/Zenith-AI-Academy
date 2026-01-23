@@ -101,10 +101,10 @@ export default async function LessonPage({ params }: LessonPageProps) {
                             isPreviewMode={isAdmin}
                             currentSubmission={lesson.currentSubmission}
                             userProgress={lesson.userProgress}
+                            navigation={navigation}
                         />
                     </div>
 
-                    {/* Action Buttons */}
                     {/* Action Buttons - Hide for Assignments as they have their own submission flow */}
                     {lesson.contentType !== 'ASSIGNMENT' && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 glass-card">
@@ -142,34 +142,36 @@ export default async function LessonPage({ params }: LessonPageProps) {
                         </div>
                     )}
 
-                    {/* Navigation */}
-                    <div className="flex items-center justify-between mt-8 pt-8 border-t border-[var(--border-color)]">
-                        {navigation.prev ? (
-                            <Link
-                                href={`/lessons/${navigation.prev.id}`}
-                                className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                                <div className="text-left">
-                                    <p className="text-xs text-[var(--text-muted)]">Previous</p>
-                                    <p className="font-medium">{navigation.prev.title}</p>
-                                </div>
-                            </Link>
-                        ) : <div />}
+                    {/* Generic Navigation Footer - HIDE for Assignments (handled internally) */}
+                    {lesson.contentType !== 'ASSIGNMENT' && (
+                        <div className="flex items-center justify-between mt-8 pt-8 border-t border-[var(--border-color)]">
+                            {navigation.prev ? (
+                                <Link
+                                    href={`/lessons/${navigation.prev.id}`}
+                                    className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                    <div className="text-left">
+                                        <p className="text-xs text-[var(--text-muted)]">Previous</p>
+                                        <p className="font-medium">{navigation.prev.title}</p>
+                                    </div>
+                                </Link>
+                            ) : <div />}
 
-                        {(navigation.next && (isCompleted || isAdmin)) ? (
-                            <Link
-                                href={`/lessons/${navigation.next.id}`}
-                                className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition text-right"
-                            >
-                                <div>
-                                    <p className="text-xs text-[var(--text-muted)]">Next</p>
-                                    <p className="font-medium">{navigation.next.title}</p>
-                                </div>
-                                <ChevronRight className="w-5 h-5" />
-                            </Link>
-                        ) : <div />}
-                    </div>
+                            {(navigation.next && (isCompleted || isAdmin)) ? (
+                                <Link
+                                    href={`/lessons/${navigation.next.id}`}
+                                    className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition text-right"
+                                >
+                                    <div>
+                                        <p className="text-xs text-[var(--text-muted)]">Next</p>
+                                        <p className="font-medium">{navigation.next.title}</p>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5" />
+                                </Link>
+                            ) : <div />}
+                        </div>
+                    )}
                 </div>
             </div>
         </div >
