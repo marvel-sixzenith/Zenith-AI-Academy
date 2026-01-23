@@ -67,7 +67,7 @@ export default function QuizRunner({
         maxRetries: data.settings?.maxRetries ?? 3
     };
 
-    const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
+    const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>(data?.questions || []);
     const [retryCount, setRetryCount] = useState(0);
 
     // Initialize Questions (Shuffle if needed)
@@ -82,6 +82,23 @@ export default function QuizRunner({
         }
         setShuffledQuestions(q);
     }, [data, settings.shuffleQuestions, isSubmitted]);
+
+    // Restore answer when navigating (back or forward)
+    useEffect(() => {
+        const storedAnswer = allAnswers[currentQuestionIndex];
+        if (storedAnswer !== undefined) {
+            setCurrentAnswer(storedAnswer);
+        } else {
+            // Initialize default if not visited
+            if (currentType === 'CHECKBOXES') {
+                setCurrentAnswer([]);
+            } else if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') {
+                setCurrentAnswer('');
+            } else {
+                setCurrentAnswer(null);
+            }
+        }
+    }, [currentQuestionIndex]); // Removed currentType dependence to avoid reset
 
     const questions = shuffledQuestions;
     const currentQuestion = questions[currentQuestionIndex];
@@ -163,23 +180,6 @@ export default function QuizRunner({
             setCurrentQuestionIndex(prev => prev - 1);
         }
     };
-
-    // Restore answer when navigating (back or forward)
-    useEffect(() => {
-        const storedAnswer = allAnswers[currentQuestionIndex];
-        if (storedAnswer !== undefined) {
-            setCurrentAnswer(storedAnswer);
-        } else {
-            // Initialize default if not visited
-            if (currentType === 'CHECKBOXES') {
-                setCurrentAnswer([]);
-            } else if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') {
-                setCurrentAnswer('');
-            } else {
-                setCurrentAnswer(null);
-            }
-        }
-    }, [currentQuestionIndex]); // Removed currentType dependency to avoid reset on same type
 
     const calculateScore = async (finalAnswers: any[]) => {
         let correctCount = 0;
