@@ -53,6 +53,7 @@ export async function getLessonById(id: string, userId?: string) {
         currentSubmission
     };
 
+
     // Find prev/next lessons
     const allModules = await prisma.module.findMany({
         where: { trackId: lesson.module.trackId },
@@ -60,6 +61,12 @@ export async function getLessonById(id: string, userId?: string) {
             lessons: {
                 where: { status: 'PUBLISHED' },
                 orderBy: { orderIndex: 'asc' },
+                include: {
+                    progress: userId ? {
+                        where: { userId },
+                        select: { status: true }
+                    } : false
+                }
             },
         },
         orderBy: { orderIndex: 'asc' },
@@ -70,6 +77,30 @@ export async function getLessonById(id: string, userId?: string) {
 
     const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
     const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
+
+    // Check if current lesson should be unlocked based on previous lesson
+    if (userStatus === 'LOCKED') {
+        if (!prevLesson) {
+            // First lesson of the track is always unlocked
+            userStatus = 'UNLOCKED';
+        } else if (prevLesson.progress && prevLesson.progress[0]?.status === 'COMPLETED') {
+            // Previous lesson is completed, so this one is unlocked
+            userStatus = 'UNLOCKED';
+        }
+
+        // Update the lesson object with the calculated status
+        if (lessonWithParsedData.userProgress) {
+            lessonWithParsedData.userProgress.status = userStatus;
+        } else {
+            // Create a temporary progress object for the frontend
+            lessonWithParsedData.userProgress = {
+                status: userStatus,
+                userId: userId || '',
+                lessonId: id,
+                // Add other required fields with dummy values if needed by frontend types
+            };
+        }
+    }
 
     return {
         lesson: lessonWithParsedData,
