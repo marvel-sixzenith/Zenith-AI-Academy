@@ -55,51 +55,67 @@ export default function PrivateCommentSection({ lessonId, existingComment }: Pri
     };
 
     return (
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden flex flex-col mt-4 md:mt-6">
-            <div className="p-4 border-b border-[var(--border-color)] flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-[var(--text-muted)]" />
-                <h3 className="font-bold text-sm text-[var(--text-secondary)]">Private comments</h3>
+        <div className="bg-[var(--background-card)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden flex flex-col mt-4 md:mt-6 transition-all hover:shadow-md">
+            <div className="p-4 border-b border-[var(--border-color)] flex items-center gap-3 bg-[var(--background-secondary)]/30">
+                <div className="w-8 h-8 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]">
+                    <MessageSquare className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-sm text-[var(--text-primary)]">Private Comments</h3>
             </div>
 
-            <div className="p-4">
-                {/* List of comments - in GC it shows a thread. 
-                   Our current schema only supports ONE field `comment`.
-                   So we just basically have a notepad area. 
-               */}
+            <div className="p-4 bg-gradient-to-b from-transparent to-[var(--background-secondary)]/10">
                 {savedComment && !isFocused && (
-                    <div className="mb-4 flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] text-xs font-bold shrink-0">
+                    <div className="mb-6 flex gap-3 animate-fade-in">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--primary)] to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-lg shadow-[var(--primary)]/20">
                             You
                         </div>
-                        <div className="text-sm bg-[var(--background-secondary)] p-3 rounded-r-xl rounded-bl-xl">
-                            {savedComment}
+                        <div className="relative group max-w-[85%]">
+                            <div className="text-sm bg-[var(--surface)] border border-[var(--border-color)] p-4 rounded-2xl rounded-tl-none shadow-sm text-[var(--text-secondary)] leading-relaxed">
+                                {savedComment}
+                            </div>
+                            <div className="absolute top-0 left-0 -ml-2 -mt-2 w-3 h-3 bg-[var(--primary)]/20 blur-xl rounded-full" />
                         </div>
                     </div>
                 )}
 
-                <div className={`relative transition-all ${isFocused ? 'ring-2 ring-[var(--primary)]/20 rounded-xl' : ''}`}>
-                    <div className="flex items-start gap-2">
-                        {/* Removed Lock Icon to avoid confusion */}
+                <div className={`relative transition-all duration-300 ${isFocused
+                        ? 'ring-2 ring-[var(--primary)]/20 rounded-2xl bg-[var(--background)] shadow-lg'
+                        : 'bg-[var(--background-secondary)]/50 rounded-2xl hover:bg-[var(--background-secondary)]'
+                    }`}>
+                    <div className="flex flex-col">
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             onFocus={() => setIsFocused(true)}
-                            placeholder="Add private comment..."
-                            className="input-field w-full min-h-[40px] py-2 text-sm resize-none bg-transparent border-none focus:ring-0 px-0"
+                            placeholder={savedComment ? "Add another comment..." : "Add a private comment for your instructor..."}
+                            className={`w-full bg-transparent border-none focus:ring-0 text-sm resize-none p-4 transition-all placeholder-[var(--text-muted)] text-[var(--text-primary)] ${isFocused ? 'min-h-[100px]' : 'min-h-[50px]'}`}
                             rows={isFocused ? 3 : 1}
                         />
-                        <button
-                            onClick={handleSend}
-                            disabled={!comment.trim() || isSubmitting || comment === savedComment}
-                            className={`p-2 rounded-full transition-colors ${comment.trim() && comment !== savedComment
-                                ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90'
-                                : 'bg-[var(--background-secondary)] text-[var(--text-muted)]'
-                                }`}
-                        >
-                            <Send className="w-4 h-4" />
-                        </button>
+
+                        {(isFocused || comment.trim()) && (
+                            <div className="flex justify-end p-2 border-t border-[var(--border-color)]/50 bg-[var(--background)]/50 rounded-b-2xl">
+                                <button
+                                    onClick={handleSend}
+                                    disabled={!comment.trim() || isSubmitting || comment === savedComment}
+                                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${comment.trim() && comment !== savedComment
+                                            ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-lg shadow-[var(--primary)]/20 transform hover:-translate-y-0.5'
+                                            : 'bg-[var(--background-secondary)] text-[var(--text-muted)] cursor-not-allowed'
+                                        }`}
+                                >
+                                    {isSubmitting ? 'Sending...' : 'Send'}
+                                    <Send className="w-3 h-3" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {!isFocused && !savedComment && (
+                    <p className="text-xs text-center text-[var(--text-muted)] mt-4">
+                        <Lock className="w-3 h-3 inline-block mr-1 mb-0.5" />
+                        Comments are private between you and the instructor
+                    </p>
+                )}
             </div>
         </div>
     );

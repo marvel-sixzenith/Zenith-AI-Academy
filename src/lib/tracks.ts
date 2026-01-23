@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 
 export async function getTracks(userId?: string) {
     const tracks = await prisma.track.findMany({
-        orderBy: { orderIndex: 'asc' },
+        orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
         include: {
             modules: {
                 include: {
@@ -16,7 +16,7 @@ export async function getTracks(userId?: string) {
                         } : undefined,
                     },
                 },
-                orderBy: { orderIndex: 'asc' },
+                orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
             },
             prerequisiteTrack: true,
         },
@@ -58,7 +58,7 @@ export async function getTrackBySlug(slug: string, userId?: string) {
                         orderBy: { orderIndex: 'asc' },
                     },
                 },
-                orderBy: { orderIndex: 'asc' },
+                orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
             },
             prerequisiteTrack: true,
         },

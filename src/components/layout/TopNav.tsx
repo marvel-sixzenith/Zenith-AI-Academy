@@ -18,6 +18,7 @@ import {
     Settings
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
+import PointsDisplay from './PointsDisplay';
 
 interface TopNavProps {
     user: {
@@ -78,6 +79,9 @@ export default function TopNav({ user }: TopNavProps) {
 
                     {/* Right Section */}
                     <div className="flex items-center gap-2">
+                        {/* Points */}
+                        <PointsDisplay />
+
                         {/* Notifications */}
                         <NotificationDropdown />
 

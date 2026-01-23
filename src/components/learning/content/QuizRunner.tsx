@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, ChevronRight, RotateCcw, Sparkles, Award, Target, CheckSquare, Type, AlignLeft } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronLeft, ChevronRight, RotateCcw, Sparkles, Award, Target, CheckSquare, Type, AlignLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
@@ -67,17 +67,8 @@ export default function QuizRunner({
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
     const progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
 
-    // Reset current answer when question changes
-    useEffect(() => {
-        // Initialize default empty answer based on type
-        if (currentType === 'CHECKBOXES') {
-            setCurrentAnswer([]);
-        } else if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') {
-            setCurrentAnswer('');
-        } else {
-            setCurrentAnswer(null);
-        }
-    }, [currentQuestionIndex, currentType]);
+    // Reset logic moved to new useEffect handling navigation
+
 
     const handleOptionSelect = (index: number) => {
         if (isSubmitted || showFeedback) return;
@@ -124,6 +115,34 @@ export default function QuizRunner({
             }, 300);
         }
     };
+
+    const handlePrevious = () => {
+        if (currentQuestionIndex > 0) {
+            // Save current answer before going back (optional, but good UX)
+            const newAllAnswers = [...allAnswers];
+            newAllAnswers[currentQuestionIndex] = currentAnswer;
+            setAllAnswers(newAllAnswers);
+
+            setCurrentQuestionIndex(prev => prev - 1);
+        }
+    };
+
+    // Restore answer when navigating (back or forward)
+    useEffect(() => {
+        const storedAnswer = allAnswers[currentQuestionIndex];
+        if (storedAnswer !== undefined) {
+            setCurrentAnswer(storedAnswer);
+        } else {
+            // Initialize default if not visited
+            if (currentType === 'CHECKBOXES') {
+                setCurrentAnswer([]);
+            } else if (currentType === 'SHORT_ANSWER' || currentType === 'PARAGRAPH') {
+                setCurrentAnswer('');
+            } else {
+                setCurrentAnswer(null);
+            }
+        }
+    }, [currentQuestionIndex]); // Removed currentType dependency to avoid reset on same type
 
     const calculateScore = async (finalAnswers: any[]) => {
         let correctCount = 0;
@@ -554,15 +573,27 @@ export default function QuizRunner({
                     {renderInput()}
 
                     <div className="flex items-center justify-between mt-8 pt-6 border-t border-[var(--border-color)]">
-                        <div className="hidden sm:flex items-center gap-2 text-sm text-[var(--text-muted)]">
-                            {currentType === 'MULTIPLE_CHOICE' ? (
-                                <>
-                                    <kbd className="px-2 py-1 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-color)] font-mono text-xs">
-                                        1-{currentQuestion?.options?.length}
-                                    </kbd>
-                                    <span>to select</span>
-                                </>
-                            ) : null}
+                        <div className="flex items-center gap-4">
+                            {currentQuestionIndex > 0 && (
+                                <button
+                                    onClick={handlePrevious}
+                                    className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl font-semibold text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)] transition-all duration-200"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                    Previous
+                                </button>
+                            )}
+
+                            <div className="hidden sm:flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                                {currentType === 'MULTIPLE_CHOICE' ? (
+                                    <>
+                                        <kbd className="px-2 py-1 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-color)] font-mono text-xs">
+                                            1-{currentQuestion?.options?.length}
+                                        </kbd>
+                                        <span>to select</span>
+                                    </>
+                                ) : null}
+                            </div>
                         </div>
 
                         <button

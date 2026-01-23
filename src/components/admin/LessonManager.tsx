@@ -9,6 +9,7 @@ import AssignmentEditor from './lesson-editors/AssignmentEditor';
 import VideoPlayer from '@/components/learning/VideoPlayer';
 import PdfViewer from '@/components/learning/content/PdfViewer';
 import { toast } from 'react-hot-toast';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
     DndContext,
     closestCenter,
@@ -403,10 +404,12 @@ export default function LessonManager() {
         setShowPreview(false);
     };
 
+    const debouncedContentData = useDebounce(formData.contentData, 800);
+
     // Helper to get preview data safely
     const getPreviewData = () => {
         try {
-            const trimmed = formData.contentData.trim();
+            const trimmed = debouncedContentData.trim();
             if (!trimmed || trimmed === '{}') return null;
 
             // Try parsing as JSON first
