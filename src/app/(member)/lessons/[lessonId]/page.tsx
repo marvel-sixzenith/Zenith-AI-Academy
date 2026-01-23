@@ -105,39 +105,42 @@ export default async function LessonPage({ params }: LessonPageProps) {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 glass-card">
-                        <div className="flex items-center gap-2">
-                            {isAdmin ? (
-                                <span className="text-amber-400 text-sm">
-                                    Preview mode - progress not tracked
-                                </span>
-                            ) : (
-                                <span className="text-[var(--text-secondary)]">
-                                    Earn <strong className="text-[var(--primary-light)]">+{lesson.pointsValue} points</strong> for completing this lesson
-                                </span>
-                            )}
-                        </div>
+                    {/* Action Buttons - Hide for Assignments as they have their own submission flow */}
+                    {lesson.contentType !== 'ASSIGNMENT' && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 glass-card">
+                            <div className="flex items-center gap-2">
+                                {isAdmin ? (
+                                    <span className="text-amber-400 text-sm">
+                                        Preview mode - progress not tracked
+                                    </span>
+                                ) : (
+                                    <span className="text-[var(--text-secondary)]">
+                                        Earn <strong className="text-[var(--primary-light)]">+{lesson.pointsValue} points</strong> for completing this lesson
+                                    </span>
+                                )}
+                            </div>
 
-                        <div className="flex items-center gap-3">
-                            {!isCompleted && !isAdmin && lesson.contentType !== 'QUIZ' && lesson.contentType !== 'ASSIGNMENT' && (
-                                <LessonCompleteButton
-                                    lessonId={lessonId}
-                                    lessonTitle={lesson.title}
-                                    contentType={lesson.contentType}
-                                />
-                            )}
-                            {/* Only show Next Lesson button if current lesson is completed or if admin */}
-                            {navigation.next && (isCompleted || isAdmin) && (
-                                <Link
-                                    href={`/lessons/${navigation.next.id}`}
-                                    className="btn-primary"
-                                >
-                                    Next Lesson
-                                    <ChevronRight className="w-5 h-5" />
-                                </Link>
-                            )}
+                            <div className="flex items-center gap-3">
+                                {!isCompleted && !isAdmin && lesson.contentType !== 'QUIZ' && lesson.contentType !== 'ASSIGNMENT' && (
+                                    <LessonCompleteButton
+                                        lessonId={lessonId}
+                                        lessonTitle={lesson.title}
+                                        contentType={lesson.contentType}
+                                    />
+                                )}
+                                {/* Only show Next Lesson button if current lesson is completed or if admin */}
+                                {navigation.next && (isCompleted || isAdmin) && (
+                                    <Link
+                                        href={`/lessons/${navigation.next.id}`}
+                                        className="btn-primary"
+                                    >
+                                        Next Lesson
+                                        <ChevronRight className="w-5 h-5" />
+                                    </Link>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Navigation */}
                     <div className="flex items-center justify-between mt-8 pt-8 border-t border-[var(--border-color)]">

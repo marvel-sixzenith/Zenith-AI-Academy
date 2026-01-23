@@ -63,7 +63,7 @@ export default function PrivateCommentSection({ lessonId, existingComment }: Pri
                 <h3 className="font-bold text-sm text-[var(--text-primary)]">Private Comments</h3>
             </div>
 
-            <div className="p-4 bg-gradient-to-b from-transparent to-[var(--background-secondary)]/10">
+            <div className="p-4 bg-[var(--background-secondary)]/10">
                 {savedComment && !isFocused && (
                     <div className="mb-6 flex gap-3 animate-fade-in">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--primary)] to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-lg shadow-[var(--primary)]/20">
@@ -79,8 +79,8 @@ export default function PrivateCommentSection({ lessonId, existingComment }: Pri
                 )}
 
                 <div className={`relative transition-all duration-300 ${isFocused
-                        ? 'ring-2 ring-[var(--primary)]/20 rounded-2xl bg-[var(--background)] shadow-lg'
-                        : 'bg-[var(--background-secondary)]/50 rounded-2xl hover:bg-[var(--background-secondary)]'
+                    ? 'ring-2 ring-[var(--primary)]/20 rounded-2xl bg-[var(--background)] shadow-lg'
+                    : 'bg-[var(--background-secondary)]/50 rounded-2xl hover:bg-[var(--background-secondary)]'
                     }`}>
                     <div className="flex flex-col">
                         <textarea
@@ -98,8 +98,8 @@ export default function PrivateCommentSection({ lessonId, existingComment }: Pri
                                     onClick={handleSend}
                                     disabled={!comment.trim() || isSubmitting || comment === savedComment}
                                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${comment.trim() && comment !== savedComment
-                                            ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-lg shadow-[var(--primary)]/20 transform hover:-translate-y-0.5'
-                                            : 'bg-[var(--background-secondary)] text-[var(--text-muted)] cursor-not-allowed'
+                                        ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 shadow-lg shadow-[var(--primary)]/20 transform hover:-translate-y-0.5'
+                                        : 'bg-[var(--background-secondary)] text-[var(--text-muted)] cursor-not-allowed'
                                         }`}
                                 >
                                     {isSubmitting ? 'Sending...' : 'Send'}

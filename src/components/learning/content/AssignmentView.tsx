@@ -25,7 +25,7 @@ export default function AssignmentView({ data, lessonId, currentSubmission }: As
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 min-h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {/* Left Column - Instructions & Content */}
             <div className="md:col-span-2 space-y-6">
 
@@ -36,9 +36,15 @@ export default function AssignmentView({ data, lessonId, currentSubmission }: As
                     </div>
                     <div>
                         <h2 className="text-2xl font-bold mb-1">Assignment Details</h2>
-                        <div className="flex gap-4 text-sm text-[var(--text-muted)]">
-                            <span>100 points</span>
-                            <span>Due Tomorrow, 11:59 PM</span> {/* TODO: Add due date to schema */}
+                        <div className="flex flex-wrap gap-3 text-sm text-[var(--text-muted)] mt-2">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-color)]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]"></span>
+                                <span>10 Points</span>
+                            </div>
+                            {/* Data for due date not yet available in props, hiding for now or static */}
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-color)]">
+                                <span>Due Next Week</span>
+                            </div>
                         </div>
                     </div>
                 </div>
