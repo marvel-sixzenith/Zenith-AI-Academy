@@ -15,6 +15,10 @@ export default async function MemberLayout({
         redirect('/login');
     }
 
+    if ((session.user as any).banned) {
+        redirect('/banned');
+    }
+
     return (
         <div className="flex min-h-screen">
             <OnboardingTour user={session.user} />
