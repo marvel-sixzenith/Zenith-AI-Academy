@@ -64,7 +64,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                             title: 'Dashboard',
                             description: 'Your main command center. Track daily streaks and progress here.',
                             onNextClick: () => {
-                                router.push('/dashboard');
+                                router.push('/tracks');
                                 driverObj.moveNext();
                             }
                         }
@@ -75,7 +75,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                             title: 'Materi Belajar',
                             description: 'Access all your courses and modules here.',
                             onNextClick: () => {
-                                router.push('/tracks');
+                                router.push('/community');
                                 driverObj.moveNext();
                             }
                         }
@@ -86,7 +86,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                             title: 'Komunitas',
                             description: 'Join discussions and connect with other learners.',
                             onNextClick: () => {
-                                router.push('/community');
+                                router.push('/leaderboard');
                                 driverObj.moveNext();
                             }
                         }
@@ -97,7 +97,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                             title: 'Papan Peringkat',
                             description: 'See where you stand against your peers.',
                             onNextClick: () => {
-                                router.push('/leaderboard');
+                                router.push('/profile');
                                 driverObj.moveNext();
                             }
                         }
