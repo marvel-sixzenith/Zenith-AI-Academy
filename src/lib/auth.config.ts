@@ -40,10 +40,10 @@ export const authConfig: NextAuthConfig = {
                     return null;
                 }
 
-                // Check if banned
-                if (user.banned) {
-                    return null;
-                }
+                // Check if banned - Removed to allow redirect to /banned page
+                // if (user.banned) {
+                //     return null;
+                // }
 
                 // Update last active
                 await prisma.user.update({
@@ -81,9 +81,10 @@ export const authConfig: NextAuthConfig = {
                         where: { email: user.email },
                     });
 
-                    if (existingUser?.banned) {
-                        return false;
-                    }
+                    // Check if banned - Removed to allow redirect to /banned page
+                    // if (existingUser?.banned) {
+                    //    return false;
+                    // }
 
                     if (!existingUser) {
                         return `/register?error=AccountNotRegistered&email=${encodeURIComponent(user.email || '')}&name=${encodeURIComponent(user.name || '')}`;
@@ -105,11 +106,13 @@ export const authConfig: NextAuthConfig = {
             if (token.id) {
                 const freshUser = await prisma.user.findUnique({
                     where: { id: token.id as string },
-                    select: { image: true, role: true },
+                    select: { image: true, role: true, banned: true },
                 });
                 if (freshUser) {
                     token.picture = freshUser.image;
                     token.role = freshUser.role;
+                    // @ts-ignore
+                    token.banned = freshUser.banned;
                 }
             }
 
@@ -120,16 +123,34 @@ export const authConfig: NextAuthConfig = {
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
                 session.user.image = token.picture as string | null;
+                // @ts-ignore
+                session.user.banned = token.banned as boolean;
             }
             return session;
         },
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
+            const user = auth?.user as any;
             const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
             const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+            const isOnBanned = nextUrl.pathname.startsWith('/banned');
+
             const isOnAuth = nextUrl.pathname.startsWith('/login') ||
                 nextUrl.pathname.startsWith('/register') ||
                 nextUrl.pathname.startsWith('/forgot-password');
+
+            // Handle Banned Users
+            if (isLoggedIn && user?.banned) {
+                // If on banned page, allow
+                if (isOnBanned) return true;
+                // Redirect to banned page from anywhere else
+                return Response.redirect(new URL('/banned', nextUrl));
+            }
+
+            // Prevent non-banned users from seeing banned page
+            if (isOnBanned && (!isLoggedIn || !user?.banned)) {
+                return Response.redirect(new URL('/dashboard', nextUrl));
+            }
 
             // Redirect logged in users away from auth pages
             if (isLoggedIn && isOnAuth) {
