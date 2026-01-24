@@ -101,6 +101,7 @@ export default function Sidebar({ user }: SidebarProps) {
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                id={`nav-${item.href.replace('/', '')}`}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${isActive
                                     ? 'bg-[var(--primary)]/10 text-[var(--primary-light)]'
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)]'
