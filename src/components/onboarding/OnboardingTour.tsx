@@ -15,15 +15,20 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
     const router = useRouter();
 
     useEffect(() => {
-        // Only show if user hasn't completed onboarding AND tour isn't already active
+        // Check local storage first to prevent stale session loop
+        const isLocalCompleted = localStorage.getItem('zenith_onboarding_completed');
         const isTourActive = sessionStorage.getItem('onboarding_active');
-        if (user && !user.hasCompletedOnboarding && !isTourActive) {
+
+        if (user && !user.hasCompletedOnboarding && !isLocalCompleted && !isTourActive) {
             setShowWelcome(true);
         }
     }, [user]);
 
     const handleComplete = async () => {
+        // Set local lock immediately to prevent loop
+        localStorage.setItem('zenith_onboarding_completed', 'true');
         sessionStorage.removeItem('onboarding_active');
+
         try {
             await fetch('/api/user/onboarding', { method: 'POST' });
             router.refresh();
@@ -46,35 +51,55 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                 prevBtnText: 'Previous',
                 allowClose: true,
                 onDestroyed: () => {
-                    handleComplete();
+                    // Ensure we mark specific completion if destroyed
+                    // But handleComplete sets the permanent lock
+                    if (!localStorage.getItem('zenith_onboarding_completed')) {
+                        handleComplete();
+                    }
                 },
                 steps: [
                     {
                         element: '#nav-dashboard',
                         popover: {
                             title: 'Dashboard',
-                            description: 'Your main command center. Track daily streaks and progress here.'
+                            description: 'Your main command center. Track daily streaks and progress here.',
+                            onNextClick: () => {
+                                router.push('/dashboard');
+                                driverObj.moveNext();
+                            }
                         }
                     },
                     {
                         element: '#nav-tracks',
                         popover: {
                             title: 'Materi Belajar',
-                            description: 'Access all your courses and modules here.'
+                            description: 'Access all your courses and modules here.',
+                            onNextClick: () => {
+                                router.push('/tracks');
+                                driverObj.moveNext();
+                            }
                         }
                     },
                     {
                         element: '#nav-community',
                         popover: {
                             title: 'Komunitas',
-                            description: 'Join discussions and connect with other learners.'
+                            description: 'Join discussions and connect with other learners.',
+                            onNextClick: () => {
+                                router.push('/community');
+                                driverObj.moveNext();
+                            }
                         }
                     },
                     {
                         element: '#nav-leaderboard',
                         popover: {
                             title: 'Papan Peringkat',
-                            description: 'See where you stand against your peers.'
+                            description: 'See where you stand against your peers.',
+                            onNextClick: () => {
+                                router.push('/leaderboard');
+                                driverObj.moveNext();
+                            }
                         }
                     },
                     {
