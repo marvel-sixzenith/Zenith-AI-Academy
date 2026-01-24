@@ -23,7 +23,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
         const isLocalCompleted = localStorage.getItem(storageKey);
         const isTourActive = sessionStorage.getItem('onboarding_active');
 
-        if (user && !user.hasCompletedOnboarding && !isLocalCompleted && !isTourActive) {
+        if (user && user.role === 'MEMBER' && !user.hasCompletedOnboarding && !isLocalCompleted && !isTourActive) {
             setShowWelcome(true);
         }
     }, [user]);
