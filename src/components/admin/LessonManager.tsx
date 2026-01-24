@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, GripVertical, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, GripVertical, Eye, Briefcase } from 'lucide-react';
 import VideoEditor from './lesson-editors/VideoEditor';
 import PdfEditor from './lesson-editors/PdfEditor';
 import QuizEditor from './lesson-editors/QuizEditor';
