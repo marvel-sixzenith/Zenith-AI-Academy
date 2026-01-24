@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, GripVertical } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, GripVertical, Briefcase } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
     DndContext,
@@ -39,11 +39,13 @@ interface Module {
 function SortableModuleItem({
     module,
     onEdit,
-    onDelete
+    onDelete,
+    dragEnabled = true
 }: {
     module: Module;
     onEdit: (module: Module) => void;
     onDelete: (id: string) => void;
+    dragEnabled?: boolean;
 }) {
     const {
         attributes,
@@ -52,7 +54,7 @@ function SortableModuleItem({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: module.id });
+    } = useSortable({ id: module.id, disabled: !dragEnabled });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -68,14 +70,16 @@ function SortableModuleItem({
         >
             <div className="flex items-center gap-3">
                 {/* Drag Handle */}
-                <button
-                    {...attributes}
-                    {...listeners}
-                    className="p-1.5 rounded-lg cursor-grab hover:bg-[var(--background-card)] text-[var(--text-muted)] active:cursor-grabbing"
-                    title="Drag to reorder"
-                >
-                    <GripVertical className="w-5 h-5" />
-                </button>
+                {dragEnabled && (
+                    <button
+                        {...attributes}
+                        {...listeners}
+                        className="p-1.5 rounded-lg cursor-grab hover:bg-[var(--background-card)] text-[var(--text-muted)] active:cursor-grabbing"
+                        title="Drag to reorder"
+                    >
+                        <GripVertical className="w-5 h-5" />
+                    </button>
+                )}
 
                 <div>
                     <div className="flex items-center gap-2">
@@ -296,9 +300,11 @@ export default function ModuleManager() {
         });
     };
 
-    const handleAddNew = () => {
+    const handleAddNew = (prefillTrackId?: string) => {
+        const targetTrackId = typeof prefillTrackId === 'string' ? prefillTrackId : (selectedTrackFilter !== 'all' ? selectedTrackFilter : '');
+
         setFormData({
-            trackId: selectedTrackFilter !== 'all' ? selectedTrackFilter : '',
+            trackId: targetTrackId,
             name: '',
             description: '',
             orderIndex: 0
@@ -313,7 +319,7 @@ export default function ModuleManager() {
         <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-4">
                 {!showForm && (
-                    <button onClick={handleAddNew} className="btn-primary">
+                    <button onClick={() => handleAddNew()} className="btn-primary">
                         <Plus className="w-5 h-5" />
                         Add New Module
                     </button>
@@ -414,41 +420,92 @@ export default function ModuleManager() {
             )}
 
             <div className="glass-card overflow-hidden">
-                <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30">
-                    <div className="flex items-center gap-2">
-                        <GripVertical className="w-4 h-4 text-[var(--text-muted)]" />
-                        <span className="text-sm text-[var(--text-muted)]">
-                            Drag modules to reorder them within the selected track
-                        </span>
-                    </div>
-                </div>
+                {/* Grouped View for 'All Tracks' */}
+                {selectedTrackFilter === 'all' ? (
+                    <div className="space-y-8 p-6">
+                        {tracks.map(track => {
+                            const trackModules = modules.filter(m => m.trackId === track.id);
+                            return (
+                                <div key={track.id} className="space-y-4">
+                                    <div className="flex items-center justify-between border-b pb-2 border-[var(--border-color)]">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
+                                                <Briefcase className="w-5 h-5" />
+                                            </div>
+                                            <h3 className="font-bold text-xl">{track.name}</h3>
+                                            <span className="text-sm text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border-color)] px-2 py-0.5 rounded-full">
+                                                {trackModules.length} Modules
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleAddNew(track.id)}
+                                            className="text-xs btn-secondary py-1.5 px-3 flex items-center gap-1.5"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Add Module
+                                        </button>
+                                    </div>
 
-                {filteredModules.length === 0 ? (
-                    <div className="p-8 text-center text-[var(--text-muted)]">
-                        {selectedTrackFilter === 'all'
-                            ? 'No modules yet. Create tracks first, then add modules!'
-                            : 'No modules in this track yet.'}
+                                    <div className="grid gap-3">
+                                        {trackModules.length === 0 ? (
+                                            <div className="p-4 text-center border-dashed border border-[var(--border-color)] rounded-xl bg-[var(--background-secondary)]/30">
+                                                <p className="text-sm text-[var(--text-muted)] italic">No modules in this track.</p>
+                                            </div>
+                                        ) : (
+                                            trackModules.map(module => (
+                                                <SortableModuleItem
+                                                    key={module.id}
+                                                    module={module}
+                                                    onEdit={handleEdit}
+                                                    onDelete={handleDelete}
+                                                    dragEnabled={false}
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={filteredModules.map(m => m.id)}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            {filteredModules.map((module) => (
-                                <SortableModuleItem
-                                    key={module.id}
-                                    module={module}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                />
-                            ))}
-                        </SortableContext>
-                    </DndContext>
+                    <>
+                        <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30">
+                            <div className="flex items-center gap-2">
+                                <GripVertical className="w-4 h-4 text-[var(--text-muted)]" />
+                                <span className="text-sm text-[var(--text-muted)]">
+                                    Drag modules to reorder them within the selected track
+                                </span>
+                            </div>
+                        </div>
+
+                        {filteredModules.length === 0 ? (
+                            <div className="p-8 text-center text-[var(--text-muted)]">
+                                {selectedTrackFilter === 'all'
+                                    ? 'No modules yet. Create tracks first, then add modules!'
+                                    : 'No modules in this track yet.'}
+                            </div>
+                        ) : (
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={filteredModules.map(m => m.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    {filteredModules.map((module) => (
+                                        <SortableModuleItem
+                                            key={module.id}
+                                            module={module}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                        />
+                                    ))}
+                                </SortableContext>
+                            </DndContext>
+                        )}
+                    </>
                 )}
             </div>
         </div>

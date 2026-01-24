@@ -1,15 +1,27 @@
 'use client';
 
-import { useState } from 'react';
 import { Plus, BookOpen, List, Settings } from 'lucide-react';
 import TrackManager from '@/components/admin/TrackManager';
 import ModuleManager from '@/components/admin/ModuleManager';
 import LessonManager from '@/components/admin/LessonManager';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 type Tab = 'tracks' | 'modules' | 'lessons';
 
 export default function ContentManagementPage() {
-    const [activeTab, setActiveTab] = useState<Tab>('tracks');
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    // Default to 'tracks' if no param or invalid param
+    const currentTab = (searchParams.get('tab') as Tab) || 'tracks';
+    const activeTab = ['tracks', 'modules', 'lessons'].includes(currentTab) ? currentTab : 'tracks';
+
+    const handleTabChange = (tab: Tab) => {
+        // Update URL without refreshing
+        const params = new URLSearchParams(searchParams);
+        params.set('tab', tab);
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
 
     const tabs = [
         { id: 'tracks' as Tab, label: 'Tracks', icon: BookOpen },
@@ -34,10 +46,10 @@ export default function ContentManagementPage() {
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => handleTabChange(tab.id)}
                             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${activeTab === tab.id
-                                    ? 'border-[var(--primary)] text-[var(--primary)]'
-                                    : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                                ? 'border-[var(--primary)] text-[var(--primary)]'
+                                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                                 }`}
                         >
                             <Icon className="w-5 h-5" />
@@ -48,7 +60,7 @@ export default function ContentManagementPage() {
             </div>
 
             {/* Content */}
-            <div>
+            <div className="min-h-[500px]">
                 {activeTab === 'tracks' && <TrackManager />}
                 {activeTab === 'modules' && <ModuleManager />}
                 {activeTab === 'lessons' && <LessonManager />}
