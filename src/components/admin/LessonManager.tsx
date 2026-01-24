@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, GripVertical, Eye, Briefcase } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, GripVertical, Eye, Briefcase, ChevronDown, ChevronRight } from 'lucide-react';
 import VideoEditor from './lesson-editors/VideoEditor';
 import PdfEditor from './lesson-editors/PdfEditor';
 import QuizEditor from './lesson-editors/QuizEditor';
@@ -137,7 +137,7 @@ export default function LessonManager() {
     const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
     const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('all');
     const [showPreview, setShowPreview] = useState(false);
-
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
     const [formData, setFormData] = useState({
         moduleId: '',
         title: '',
@@ -147,6 +147,16 @@ export default function LessonManager() {
         orderIndex: 0,
         status: 'DRAFT',
     });
+
+    const toggleSection = (id: string) => {
+        const newExpanded = new Set(expandedSections);
+        if (newExpanded.has(id)) {
+            newExpanded.delete(id);
+        } else {
+            newExpanded.add(id);
+        }
+        setExpandedSections(newExpanded);
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -642,47 +652,107 @@ export default function LessonManager() {
             )}
 
             {/* Lessons List with Drag and Drop */}
-            {/* Grouped View for 'All Modules' */}
+            {/* Grouped View for 'All Modules' - Organized by Track */}
             {selectedModuleFilter === 'all' ? (
-                <div className="space-y-8">
-                    {modules.map(module => {
-                        const moduleLessons = lessons.filter(l => l.moduleId === module.id);
+                <div className="space-y-4">
+                    {Object.entries(modules.reduce((acc, module) => {
+                        const trackName = module.track?.name || 'Uncategorized';
+                        if (!acc[trackName]) acc[trackName] = [];
+                        acc[trackName].push(module);
+                        return acc;
+                    }, {} as Record<string, Module[]>)).map(([trackName, trackModules]) => {
+                        const trackGroupKey = `track-${trackName}`;
+                        const isTrackExpanded = expandedSections.has(trackGroupKey);
+
                         return (
-                            <div key={module.id} className="glass-card overflow-hidden">
-                                <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-1 rounded">
-                                            {module.track?.name}
+                            <div key={trackName} className="border border-[var(--border-color)] rounded-xl overflow-hidden bg-[var(--surface)]">
+                                {/* Track Header Accordion */}
+                                <div
+                                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--background-secondary)]/50 transition-colors"
+                                    onClick={() => toggleSection(trackGroupKey)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {isTrackExpanded ? <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" /> : <ChevronRight className="w-5 h-5 text-[var(--text-muted)]" />}
+                                        <div className="p-2 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
+                                            <Briefcase className="w-5 h-5" />
+                                        </div>
+                                        <h2 className="text-lg font-bold">{trackName}</h2>
+                                        <span className="text-sm text-[var(--text-muted)] bg-[var(--background)] border border-[var(--border-color)] px-2 py-0.5 rounded-full">
+                                            {trackModules.length} Modules
                                         </span>
-                                        <h3 className="font-bold text-lg">{module.name}</h3>
-                                        <span className="text-sm text-[var(--text-muted)] ml-2">({moduleLessons.length} lessons)</span>
                                     </div>
-                                    <button
-                                        onClick={() => handleAddNew(module.id)}
-                                        className="text-xs btn-secondary py-1 px-3 flex items-center gap-1"
-                                    >
-                                        <Plus className="w-3 h-3" />
-                                        Add Lesson
-                                    </button>
                                 </div>
 
-                                <div>
-                                    {moduleLessons.length === 0 ? (
-                                        <div className="p-6 text-center text-sm text-[var(--text-muted)] italic">
-                                            No lessons in this module.
-                                        </div>
-                                    ) : (
-                                        moduleLessons.map(lesson => (
-                                            <SortableLessonItem
-                                                key={lesson.id}
-                                                lesson={lesson}
-                                                onEdit={handleEdit}
-                                                onDelete={handleDelete}
-                                                dragEnabled={false}
-                                            />
-                                        ))
-                                    )}
-                                </div>
+                                {/* Track Content (Modules) */}
+                                {isTrackExpanded && (
+                                    <div className="p-4 bg-[var(--background)]/30 space-y-4 border-t border-[var(--border-color)]">
+                                        {trackModules.map(module => {
+                                            const moduleLessons = lessons.filter(l => l.moduleId === module.id);
+                                            const moduleKey = `module-${module.id}`;
+                                            const isModuleExpanded = expandedSections.has(moduleKey);
+
+                                            return (
+                                                <div key={module.id} className="border border-[var(--border-color)]/50 rounded-xl overflow-hidden bg-[var(--surface)] shadow-sm">
+                                                    {/* Module Header Accordion */}
+                                                    <div className="p-3 bg-[var(--surface)] border-b border-[var(--border-color)]/50 flex items-center justify-between cursor-pointer hover:bg-[var(--background-secondary)]/30"
+                                                        onClick={() => toggleSection(moduleKey)}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            {isModuleExpanded ? <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" /> : <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />}
+                                                            <div>
+                                                                <h3 className="font-bold text-base leading-tight">{module.name}</h3>
+                                                                <p className="text-xs text-[var(--text-muted)] mt-0.5">{moduleLessons.length} lessons</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleAddNew(module.id); }}
+                                                                className="text-xs btn-secondary py-1.5 px-3 flex items-center gap-1.5 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] transition-colors"
+                                                            >
+                                                                <Plus className="w-3.5 h-3.5" />
+                                                                Add Lesson
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Module Content (Lessons) */}
+                                                    {isModuleExpanded && (
+                                                        <div className="bg-[var(--background)]/10">
+                                                            {moduleLessons.length === 0 ? (
+                                                                <div className="p-6 text-center text-[var(--text-muted)] italic">
+                                                                    No lessons in this module.
+                                                                </div>
+                                                            ) : (
+                                                                <DndContext
+                                                                    sensors={sensors}
+                                                                    collisionDetection={closestCenter}
+                                                                    onDragEnd={handleDragEnd}
+                                                                >
+                                                                    <SortableContext
+                                                                        items={moduleLessons.map(l => l.id)}
+                                                                        strategy={verticalListSortingStrategy}
+                                                                    >
+                                                                        <div className="divide-y divide-[var(--border-color)]/50">
+                                                                            {moduleLessons.map(lesson => (
+                                                                                <SortableLessonItem
+                                                                                    key={lesson.id}
+                                                                                    lesson={lesson}
+                                                                                    onEdit={handleEdit}
+                                                                                    onDelete={handleDelete}
+                                                                                    dragEnabled={true}
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                    </SortableContext>
+                                                                </DndContext>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

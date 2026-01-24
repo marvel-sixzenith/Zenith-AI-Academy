@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, GripVertical, Briefcase } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, GripVertical, Briefcase, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
     DndContext,
@@ -121,12 +121,23 @@ export default function ModuleManager() {
     const [showForm, setShowForm] = useState(false);
     const [editingModule, setEditingModule] = useState<Module | null>(null);
     const [selectedTrackFilter, setSelectedTrackFilter] = useState<string>('all');
+    const [expandedTracks, setExpandedTracks] = useState<Set<string>>(new Set());
     const [formData, setFormData] = useState({
         trackId: '',
         name: '',
         description: '',
         orderIndex: 0,
     });
+
+    const toggleTrack = (trackId: string) => {
+        const newExpanded = new Set(expandedTracks);
+        if (newExpanded.has(trackId)) {
+            newExpanded.delete(trackId);
+        } else {
+            newExpanded.add(trackId);
+        }
+        setExpandedTracks(newExpanded);
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -422,47 +433,70 @@ export default function ModuleManager() {
             <div className="glass-card overflow-hidden">
                 {/* Grouped View for 'All Tracks' */}
                 {selectedTrackFilter === 'all' ? (
-                    <div className="space-y-8 p-6">
+                    <div className="space-y-4 p-6">
                         {tracks.map(track => {
                             const trackModules = modules.filter(m => m.trackId === track.id);
+                            const isExpanded = expandedTracks.has(track.id);
+
                             return (
-                                <div key={track.id} className="space-y-4">
-                                    <div className="flex items-center justify-between border-b pb-2 border-[var(--border-color)]">
+                                <div key={track.id} className="border border-[var(--border-color)] rounded-xl overflow-hidden bg-[var(--surface)]">
+                                    <div
+                                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--background-secondary)]/50 transition-colors"
+                                        onClick={() => toggleTrack(track.id)}
+                                    >
                                         <div className="flex items-center gap-3">
+                                            {isExpanded ? <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" /> : <ChevronRight className="w-5 h-5 text-[var(--text-muted)]" />}
                                             <div className="p-2 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
                                                 <Briefcase className="w-5 h-5" />
                                             </div>
-                                            <h3 className="font-bold text-xl">{track.name}</h3>
-                                            <span className="text-sm text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border-color)] px-2 py-0.5 rounded-full">
+                                            <h3 className="font-bold text-lg">{track.name}</h3>
+                                            <span className="text-sm text-[var(--text-muted)] bg-[var(--background)] border border-[var(--border-color)] px-2 py-0.5 rounded-full">
                                                 {trackModules.length} Modules
                                             </span>
                                         </div>
-                                        <button
-                                            onClick={() => handleAddNew(track.id)}
-                                            className="text-xs btn-secondary py-1.5 px-3 flex items-center gap-1.5"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" />
-                                            Add Module
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleAddNew(track.id); }}
+                                                className="text-xs btn-secondary py-1.5 px-3 flex items-center gap-1.5"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" />
+                                                Add Module
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div className="grid gap-3">
-                                        {trackModules.length === 0 ? (
-                                            <div className="p-4 text-center border-dashed border border-[var(--border-color)] rounded-xl bg-[var(--background-secondary)]/30">
-                                                <p className="text-sm text-[var(--text-muted)] italic">No modules in this track.</p>
-                                            </div>
-                                        ) : (
-                                            trackModules.map(module => (
-                                                <SortableModuleItem
-                                                    key={module.id}
-                                                    module={module}
-                                                    onEdit={handleEdit}
-                                                    onDelete={handleDelete}
-                                                    dragEnabled={false}
-                                                />
-                                            ))
-                                        )}
-                                    </div>
+                                    {isExpanded && (
+                                        <div className="border-t border-[var(--border-color)] bg-[var(--background)]/30">
+                                            {trackModules.length === 0 ? (
+                                                <div className="p-6 text-center border-dashed border border-[var(--border-color)]/50 m-4 rounded-xl">
+                                                    <p className="text-sm text-[var(--text-muted)] italic">No modules in this track.</p>
+                                                </div>
+                                            ) : (
+                                                <DndContext
+                                                    sensors={sensors}
+                                                    collisionDetection={closestCenter}
+                                                    onDragEnd={handleDragEnd}
+                                                >
+                                                    <SortableContext
+                                                        items={trackModules.map(m => m.id)}
+                                                        strategy={verticalListSortingStrategy}
+                                                    >
+                                                        <div className="divide-y divide-[var(--border-color)]/50">
+                                                            {trackModules.map(module => (
+                                                                <SortableModuleItem
+                                                                    key={module.id}
+                                                                    module={module}
+                                                                    onEdit={handleEdit}
+                                                                    onDelete={handleDelete}
+                                                                    dragEnabled={true}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </SortableContext>
+                                                </DndContext>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
