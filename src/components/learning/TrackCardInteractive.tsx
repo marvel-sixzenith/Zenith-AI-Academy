@@ -14,10 +14,24 @@ const iconMap: Record<string, typeof Wrench> = {
 
 interface TrackCardProps {
     track: any;
+    isExpanded?: boolean;
+    onToggle?: () => void;
 }
 
-export default function TrackCardInteractive({ track }: TrackCardProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
+export default function TrackCardInteractive({ track, isExpanded: controlledExpanded, onToggle }: TrackCardProps) {
+    const [localExpanded, setLocalExpanded] = useState(false);
+
+    // Determine if controlled or uncontrolled
+    const isExpanded = controlledExpanded !== undefined ? controlledExpanded : localExpanded;
+
+    const handleToggle = () => {
+        if (onToggle) {
+            onToggle();
+        } else {
+            setLocalExpanded(!localExpanded);
+        }
+    };
+
     const Icon = iconMap[track.icon] || Wrench;
     const color = track.slug === 'engineer' ? 'var(--primary)' : track.slug === 'entrepreneur' ? 'var(--success)' : 'var(--warning)';
 
@@ -44,7 +58,7 @@ export default function TrackCardInteractive({ track }: TrackCardProps) {
             {/* Header / Click Area for Expansion */}
             <div
                 className={clsx("cursor-pointer", track.isLocked && "pointer-events-none")}
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={handleToggle}
             >
                 <div className="flex justify-between items-start">
                     {/* Track Icon */}

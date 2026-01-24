@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { getTracks } from '@/lib/tracks';
-import TrackCardInteractive from '@/components/learning/TrackCardInteractive';
+import InteractiveTrackList from '@/components/learning/InteractiveTrackList';
 
 export default async function TracksPage() {
     const session = await auth();
@@ -21,11 +21,7 @@ export default async function TracksPage() {
                 </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-                {tracks.map((track: any) => (
-                    <TrackCardInteractive key={track.id} track={track} />
-                ))}
-            </div>
+            <InteractiveTrackList tracks={tracks} />
         </div>
     );
 }

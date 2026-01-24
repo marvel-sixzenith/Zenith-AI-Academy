@@ -7,7 +7,7 @@ import { getLastActiveLesson } from '@/lib/user-progress';
 import { Card } from '@/components/ui/Card';
 import { buttonVariants } from '@/components/ui/Button';
 import clsx from 'clsx';
-import TrackCardInteractive from '@/components/learning/TrackCardInteractive';
+import InteractiveTrackList from '@/components/learning/InteractiveTrackList';
 import { checkAndUpdateStreak } from '@/lib/user-streaks';
 import OnboardingTour from '@/components/onboarding/OnboardingTour';
 
@@ -151,11 +151,7 @@ export default async function DashboardPage() {
                     </Link>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6 items-start">
-                    {tracks.map((track: any) => (
-                        <TrackCardInteractive key={track.id} track={track} />
-                    ))}
-                </div>
+                <InteractiveTrackList tracks={tracks} />
             </div>
             {/* Onboarding Tour */}
             <OnboardingTour user={user} />
