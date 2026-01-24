@@ -393,7 +393,7 @@ export default function LessonManager() {
         setShowForm(false);
         setEditingLesson(null);
         setFormData({
-            moduleId: '',
+            moduleId: selectedModuleFilter !== 'all' ? selectedModuleFilter : '', // Pre-fill if filtered
             title: '',
             contentType: 'VIDEO',
             contentData: '{}',
@@ -428,13 +428,27 @@ export default function LessonManager() {
 
     const previewData = getPreviewData();
 
+    const handleAddNew = () => {
+        setFormData({
+            moduleId: selectedModuleFilter !== 'all' ? selectedModuleFilter : '',
+            title: '',
+            contentType: 'VIDEO',
+            contentData: '{}',
+            pointsValue: 10,
+            orderIndex: 0,
+            status: 'DRAFT',
+        });
+        setEditingLesson(null);
+        setShowForm(true);
+    };
+
     if (isLoading) return <div>Loading lessons...</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-4">
                 {!showForm && (
-                    <button onClick={() => setShowForm(true)} className="btn-primary">
+                    <button onClick={handleAddNew} className="btn-primary">
                         <Plus className="w-5 h-5" />
                         Add New Lesson
                     </button>

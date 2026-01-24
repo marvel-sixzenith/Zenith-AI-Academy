@@ -152,7 +152,7 @@ export default async function DashboardPage() {
                     </Link>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-3 gap-6 items-start">
                     {tracks.map((track: any) => (
                         <TrackCardInteractive key={track.id} track={track} />
                     ))}

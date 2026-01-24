@@ -296,13 +296,24 @@ export default function ModuleManager() {
         });
     };
 
+    const handleAddNew = () => {
+        setFormData({
+            trackId: selectedTrackFilter !== 'all' ? selectedTrackFilter : '',
+            name: '',
+            description: '',
+            orderIndex: 0
+        });
+        setEditingModule(null);
+        setShowForm(true);
+    };
+
     if (isLoading) return <div>Loading modules...</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-4">
                 {!showForm && (
-                    <button onClick={() => setShowForm(true)} className="btn-primary">
+                    <button onClick={handleAddNew} className="btn-primary">
                         <Plus className="w-5 h-5" />
                         Add New Module
                     </button>
