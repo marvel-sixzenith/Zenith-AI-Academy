@@ -149,7 +149,12 @@ export default async function CommunityPage(props: CommunityPageProps) {
                             </div>
                         ) : (
                             posts.map((post) => (
-                                <PostCard key={post.id} post={post} />
+                                <PostCard
+                                    key={post.id}
+                                    post={post}
+                                    currentUserId={session.user.id}
+                                    currentUserRole={session.user.role}
+                                />
                             ))
                         )}
                     </div>

@@ -284,15 +284,22 @@ export default function UserTable({ users }: UserTableProps) {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span
-                                                className="px-2 py-1 rounded-full text-xs font-medium"
-                                                style={{
-                                                    backgroundColor: `color-mix(in srgb, ${roleColors[user.role] || 'gray'} 15%, transparent)`,
-                                                    color: roleColors[user.role] || 'gray'
-                                                }}
-                                            >
-                                                {user.role}
-                                            </span>
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span
+                                                    className="px-2 py-1 rounded-full text-xs font-medium"
+                                                    style={{
+                                                        backgroundColor: `color-mix(in srgb, ${roleColors[user.role] || 'gray'} 15%, transparent)`,
+                                                        color: roleColors[user.role] || 'gray'
+                                                    }}
+                                                >
+                                                    {user.role}
+                                                </span>
+                                                {user.banned && (
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-500 border border-red-500/20">
+                                                        BANNED
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="p-4 font-mono font-medium">{user.points.toLocaleString()}</td>
                                         <td className="p-4">

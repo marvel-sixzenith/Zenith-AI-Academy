@@ -22,7 +22,7 @@ interface Post {
     comments: { id: string }[];
 }
 
-export default function PostCard({ post }: { post: Post }) {
+export default function PostCard({ post, currentUserId, currentUserRole }: { post: Post; currentUserId: string; currentUserRole: string; }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [commentCount, setCommentCount] = useState(post.comments.length);
 
@@ -91,6 +91,8 @@ export default function PostCard({ post }: { post: Post }) {
                 <CommentSection
                     postId={post.id}
                     commentsLocked={post.commentsLocked}
+                    currentUserId={currentUserId}
+                    currentUserRole={currentUserRole}
                     onCommentAdded={() => setCommentCount(prev => prev + 1)}
                 />
             )}

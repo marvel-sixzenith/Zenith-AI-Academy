@@ -97,7 +97,7 @@ export default function NotificationDropdown() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 glass-card animate-fade-in shadow-xl z-50 border border-[var(--border-color)] overflow-hidden rounded-xl">
+                <div className="absolute right-0 mt-2 w-80 glass-card bg-[#0B1221] animate-fade-in shadow-xl z-50 border border-[var(--border-color)] overflow-hidden rounded-xl">
                     <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--background-secondary)]/50">
                         <h3 className="font-semibold text-sm">Notifications</h3>
                         {unreadCount > 0 && (

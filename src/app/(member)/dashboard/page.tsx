@@ -9,7 +9,7 @@ import { buttonVariants } from '@/components/ui/Button';
 import clsx from 'clsx';
 import TrackCardInteractive from '@/components/learning/TrackCardInteractive';
 import { checkAndUpdateStreak } from '@/lib/user-streaks';
-import OnboardingModal from '@/components/onboarding/OnboardingModal';
+import OnboardingTour from '@/components/onboarding/OnboardingTour';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -19,8 +19,6 @@ export default async function DashboardPage() {
     if (!userId) return null; // Should be handled by layout but just in case
 
     // Check and update streak (this ensures the DB is current before we fetch logic)
-    // We execute this in parallel with other fetches if possible, but for simplicity/correctness we can just await it or promise.all
-    // Ideally, we want the *updated* streak value.
     const streakResult = await checkAndUpdateStreak(userId);
 
     // Fetch tracks
@@ -29,7 +27,7 @@ export default async function DashboardPage() {
     // Fetch user stats
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { points: true, currentStreak: true }
+        select: { points: true, currentStreak: true, hasCompletedOnboarding: true }
     });
     const userPoints = user?.points || 0;
     // Use the result from checkAndUpdateStreak if available (it might be fresher), otherwise DB
@@ -160,7 +158,7 @@ export default async function DashboardPage() {
                 </div>
             </div>
             {/* Onboarding Tour */}
-            <OnboardingModal userId={userId} />
+            <OnboardingTour user={user} />
         </div>
     );
 }

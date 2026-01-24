@@ -26,6 +26,7 @@ model User {
   createdAt     DateTime  @default(now())
   lastActiveAt  DateTime  @default(now())
   lastNotificationCheck DateTime @default(now())
+  hasCompletedOnboarding Boolean @default(false)
   
   // Gamification
   currentStreak Int       @default(0)

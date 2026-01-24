@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Send, User as UserIcon, Loader2 } from 'lucide-react';
+import { Send, User as UserIcon, Loader2, Trash2, MessageCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface Comment {
@@ -20,10 +20,12 @@ interface CommentSectionProps {
     postId: string;
     commentsLocked: boolean;
     initialCount?: number;
+    currentUserId: string;
+    currentUserRole: string;
     onCommentAdded?: () => void;
 }
 
-export default function CommentSection({ postId, commentsLocked, initialCount, onCommentAdded }: CommentSectionProps) {
+export default function CommentSection({ postId, commentsLocked, initialCount, currentUserId, currentUserRole, onCommentAdded }: CommentSectionProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [isLoading, setIsLoading] = useState(true);
@@ -136,7 +138,7 @@ export default function CommentSection({ postId, commentsLocked, initialCount, o
                                 )}
                             </div>
                             <div className="flex-1">
-                                <div className="bg-[var(--background-card)] rounded-xl rounded-tl-none p-3 border border-[var(--border-color)]">
+                                <div className="bg-[var(--background-card)] rounded-xl rounded-tl-none p-3 border border-[var(--border-color)] group">
                                     <div className="flex items-center justify-between mb-1">
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold text-sm">{comment.user.name}</span>
@@ -147,6 +149,35 @@ export default function CommentSection({ postId, commentsLocked, initialCount, o
                                         <span className="text-xs text-[var(--text-muted)]">{formatDate(comment.createdAt)}</span>
                                     </div>
                                     <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap">{comment.content}</p>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center gap-3 mt-2 pt-2 border-t border-[var(--border-color)]/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            // Reply logic to be enhanced, for now just focus input or @mention
+                                            onClick={() => setNewComment(`@${comment.user.name} `)}
+                                            className="text-xs text-[var(--text-muted)] hover:text-[var(--primary)] flex items-center gap-1"
+                                        >
+                                            <MessageCircle className="w-3 h-3" />
+                                            Reply
+                                        </button>
+
+                                        {(currentUserId === comment.user.id || currentUserRole === 'ADMIN') && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm('Delete this comment?')) return;
+                                                    try {
+                                                        await fetch(`/api/posts/${postId}/comments/${comment.id}`, { method: 'DELETE' });
+                                                        setComments(prev => prev.filter(c => c.id !== comment.id));
+                                                        toast.success('Comment deleted');
+                                                    } catch (e) { toast.error('Failed to delete'); }
+                                                }}
+                                                className="text-xs text-[var(--text-muted)] hover:text-red-500 flex items-center gap-1"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                                Delete
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

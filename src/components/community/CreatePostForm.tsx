@@ -25,7 +25,9 @@ export default function CreatePostForm({ channels }: { channels: Channel[] }) {
 
         // Auto-assign channel logic
         let targetChannelId = channels.find(c => c.name === 'General')?.id || channels[0]?.id;
-        const lowerContent = (formData.title + ' ' + formData.content).toLowerCase();
+        const generatedTitle = formData.content.slice(0, 50) + (formData.content.length > 50 ? '...' : '');
+
+        const lowerContent = (generatedTitle + ' ' + formData.content).toLowerCase();
 
         if (lowerContent.includes('help') || lowerContent.includes('error') || lowerContent.includes('bug') || lowerContent.includes('issue') || lowerContent.includes('?')) {
             targetChannelId = channels.find(c => c.name === 'Help')?.id || targetChannelId;
@@ -42,6 +44,7 @@ export default function CreatePostForm({ channels }: { channels: Channel[] }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
+                    title: generatedTitle,
                     channelId: targetChannelId
                 }),
             });
@@ -73,18 +76,6 @@ export default function CreatePostForm({ channels }: { channels: Channel[] }) {
                 </button>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Post title..."
-                        className="w-full bg-transparent text-xl font-bold text-white placeholder-white/40 border-none focus:ring-0 px-0 py-2 outline-none"
-                        required
-                        autoFocus
-                    />
-
-                    <div className="h-px w-full bg-white/10" />
-
                     <textarea
                         value={formData.content}
                         onChange={(e) => setFormData({ ...formData, content: e.target.value })}
