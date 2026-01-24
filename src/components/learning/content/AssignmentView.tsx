@@ -1,6 +1,7 @@
 'use client';
 
-import { ClipboardList, CheckSquare, FileText, Download } from 'lucide-react';
+import Link from 'next/link';
+import { ClipboardList, CheckSquare, FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import YourWorkCard from './YourWorkCard';
 import PrivateCommentSection from './PrivateCommentSection';
@@ -14,9 +15,10 @@ interface AssignmentViewProps {
     };
     lessonId: string;
     currentSubmission?: any;
+    navigation?: any;
 }
 
-export default function AssignmentView({ data, lessonId, currentSubmission }: AssignmentViewProps) {
+export default function AssignmentView({ data, lessonId, currentSubmission, navigation }: AssignmentViewProps) {
     const router = useRouter();
     const content = data.description || data.instructions || '';
 
@@ -28,8 +30,9 @@ export default function AssignmentView({ data, lessonId, currentSubmission }: As
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {/* Left Column - Instructions & Content */}
             {/* Left Column - Instructions & Content */}
+            {/* Left Column - Instructions & Content */}
             <div className="md:col-span-2">
-                <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 md:p-8 h-full">
+                <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 md:p-8 h-full flex flex-col">
                     {/* Header Area */}
                     <div className="flex items-start gap-4 pb-6 border-b border-[var(--border-color)] mb-6">
                         <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 shrink-0">
@@ -51,7 +54,7 @@ export default function AssignmentView({ data, lessonId, currentSubmission }: As
                     </div>
 
                     {/* Instructions Body */}
-                    <div className="prose prose-invert max-w-none text-[var(--text-secondary)]">
+                    <div className="prose prose-invert max-w-none text-[var(--text-secondary)] flex-1">
                         <p className="whitespace-pre-wrap leading-relaxed text-base">
                             {content}
                         </p>
@@ -105,6 +108,37 @@ export default function AssignmentView({ data, lessonId, currentSubmission }: As
                                 </div>
                                 <Download className="w-5 h-5 text-[var(--text-muted)] group-hover:text-[var(--primary)]" />
                             </a>
+                        </div>
+                    )}
+
+                    {/* Internal Navigation Footer for Assignment */}
+                    {navigation && (
+                        <div className="mt-10 pt-6 border-t border-[var(--border-color)] flex items-center justify-between">
+                            {navigation.prev ? (
+                                <Link
+                                    href={`/lessons/${navigation.prev.id}`}
+                                    className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition group"
+                                >
+                                    <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                                    <div className="text-left">
+                                        <p className="text-[10px] uppercase tracking-wider font-bold">Previous</p>
+                                        <p className="text-sm font-medium truncate max-w-[150px]">{navigation.prev.title}</p>
+                                    </div>
+                                </Link>
+                            ) : <div></div>}
+
+                            {navigation.next && (
+                                <Link
+                                    href={`/lessons/${navigation.next.id}`}
+                                    className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition text-right group"
+                                >
+                                    <div className="text-right">
+                                        <p className="text-[10px] uppercase tracking-wider font-bold">Next</p>
+                                        <p className="text-sm font-medium truncate max-w-[150px]">{navigation.next.title}</p>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            )}
                         </div>
                     )}
                 </div>
