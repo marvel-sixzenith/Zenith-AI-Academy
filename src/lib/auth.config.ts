@@ -40,6 +40,11 @@ export const authConfig: NextAuthConfig = {
                     return null;
                 }
 
+                // Check if banned
+                if (user.banned) {
+                    return null;
+                }
+
                 // Update last active
                 await prisma.user.update({
                     where: { id: user.id },
@@ -75,6 +80,11 @@ export const authConfig: NextAuthConfig = {
                     const existingUser = await prisma.user.findUnique({
                         where: { email: user.email },
                     });
+
+                    if (existingUser?.banned) {
+                        return false;
+                    }
+
                     if (!existingUser) {
                         return `/register?error=AccountNotRegistered&email=${encodeURIComponent(user.email || '')}&name=${encodeURIComponent(user.name || '')}`;
                     }

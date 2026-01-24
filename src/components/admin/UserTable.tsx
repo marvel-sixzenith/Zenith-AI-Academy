@@ -80,6 +80,25 @@ export default function UserTable({ users }: UserTableProps) {
         }
     };
 
+    // Ban User
+    const handleBanUser = async (id: string, currentStatus: boolean, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const action = currentStatus ? 'unban' : 'ban';
+        if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+        try {
+            await fetch(`/api/admin/users/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ banned: !currentStatus })
+            });
+            toast.success(`User ${action}ned successfully`);
+            router.refresh();
+        } catch (error) {
+            toast.error(`Failed to ${action} user`);
+        }
+    };
+
     // Single Delete
     const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -177,9 +196,9 @@ export default function UserTable({ users }: UserTableProps) {
                             onChange={(e) => setRoleFilter(e.target.value as any)}
                             className="w-full appearance-none pl-10 pr-8 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border-color)] hover:border-[var(--primary)] cursor-pointer outline-none transition"
                         >
-                            <option value="ALL">All Roles</option>
-                            <option value="ADMIN">Admins</option>
-                            <option value="MEMBER">Members</option>
+                            <option value="ALL" className="bg-[#0B1221] text-white">All Roles</option>
+                            <option value="ADMIN" className="bg-[#0B1221] text-white">Admins</option>
+                            <option value="MEMBER" className="bg-[#0B1221] text-white">Members</option>
                         </select>
                         <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none border-l-4 border-r-4 border-t-4 border-transparent border-t-[var(--text-muted)]" />
@@ -314,14 +333,26 @@ export default function UserTable({ users }: UserTableProps) {
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-all transform translate-x-2 group-hover/row:translate-x-0">
                                                 <button
+                                                    onClick={(e) => handleBanUser(user.id, user.banned, e)}
+                                                    className={`p-2 rounded-lg transition ${user.banned
+                                                            ? 'text-green-500 hover:bg-green-500/10'
+                                                            : 'text-amber-500 hover:bg-amber-500/10'
+                                                        }`}
+                                                    title={user.banned ? 'Unban User' : 'Ban User'}
+                                                >
+                                                    {user.banned ? <CheckCircle className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                                                </button>
+                                                <button
                                                     onClick={(e) => handleEditUser(user.id, e)}
                                                     className="p-2 hover:bg-[var(--background-secondary)] rounded-lg text-[var(--text-muted)] hover:text-[var(--primary)] transition"
+                                                    title="Edit User"
                                                 >
                                                     <Edit2 className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={(e) => handleDeleteUser(user.id, e)}
                                                     className="p-2 hover:bg-red-500/10 rounded-lg text-[var(--text-muted)] hover:text-red-500 transition"
+                                                    title="Delete User"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
