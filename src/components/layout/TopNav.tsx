@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import {
     Menu,
     X,
-    Bell,
     Search,
     LogOut,
     User,
@@ -19,6 +17,8 @@ import {
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 import PointsDisplay from './PointsDisplay';
+import { useMobileMenu } from './MobileMenuContext';
+import { useState } from 'react';
 
 interface TopNavProps {
     user: {
@@ -30,15 +30,15 @@ interface TopNavProps {
 }
 
 const mobileNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/tracks', label: 'Materi Belajar', icon: BookOpen },
-    { href: '/community', label: 'Komunitas', icon: Users },
-    { href: '/leaderboard', label: 'Papan Peringkat', icon: Trophy },
-    { href: '/profile', label: 'Profil Saya', icon: User },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, id: 'mobile-nav-dashboard' },
+    { href: '/tracks', label: 'Materi Belajar', icon: BookOpen, id: 'mobile-nav-tracks' },
+    { href: '/community', label: 'Komunitas', icon: Users, id: 'mobile-nav-community' },
+    { href: '/leaderboard', label: 'Papan Peringkat', icon: Trophy, id: 'mobile-nav-leaderboard' },
+    { href: '/profile', label: 'Profil Saya', icon: User, id: 'mobile-nav-profile' },
 ];
 
 export default function TopNav({ user }: TopNavProps) {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { isMobileMenuOpen, toggleMobileMenu, closeMobileMenu } = useMobileMenu();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const isAdmin = user.role === 'ADMIN';
 
@@ -53,7 +53,8 @@ export default function TopNav({ user }: TopNavProps) {
                 <div className="h-full px-4 flex items-center justify-between">
                     {/* Mobile Menu Button */}
                     <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        id="mobile-menu-toggle"
+                        onClick={toggleMobileMenu}
                         className="lg:hidden p-2 rounded-lg hover:bg-[var(--background-card)] text-[var(--text-secondary)]"
                     >
                         {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -153,7 +154,8 @@ export default function TopNav({ user }: TopNavProps) {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                onClick={() => setIsMobileMenuOpen(false)}
+                                id={item.id}
+                                onClick={closeMobileMenu}
                                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)] transition"
                             >
                                 <item.icon className="w-5 h-5 shrink-0" />
@@ -163,7 +165,8 @@ export default function TopNav({ user }: TopNavProps) {
                         {isAdmin && (
                             <Link
                                 href="/admin"
-                                onClick={() => setIsMobileMenuOpen(false)}
+                                id="mobile-nav-admin"
+                                onClick={closeMobileMenu}
                                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)] transition"
                             >
                                 <Settings className="w-5 h-5 shrink-0" />

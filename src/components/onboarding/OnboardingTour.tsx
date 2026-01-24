@@ -1,18 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { driver } from 'driver.js';
+import { useState, useEffect, useCallback } from 'react';
+import { driver, DriveStep } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { useRouter } from 'next/navigation';
 import { Rocket } from 'lucide-react';
+import { useMobileMenu } from '@/components/layout/MobileMenuContext';
 
 interface OnboardingTourProps {
     user: any;
 }
 
+// Responsive breakpoint matching Tailwind's lg
+const MOBILE_BREAKPOINT = 1024;
+
 export default function OnboardingTour({ user }: OnboardingTourProps) {
     const [showWelcome, setShowWelcome] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const router = useRouter();
+    const { openMobileMenu } = useMobileMenu();
+
+    // Detect mobile/desktop
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         if (!user?.email) return;
@@ -28,7 +44,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
         }
     }, [user]);
 
-    const handleComplete = async () => {
+    const handleComplete = useCallback(async () => {
         if (!user?.email) return;
 
         // Set local lock immediately to prevent loop
@@ -42,14 +58,61 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
         } catch (error) {
             console.error('Failed to save onboarding status', error);
         }
-    };
+    }, [user?.email, router]);
 
-    const startTour = () => {
+    // Helper to ensure mobile menu is open before highlighting an element
+    const ensureMobileMenuOpen = useCallback((callback: () => void) => {
+        if (isMobile) {
+            openMobileMenu();
+            // Wait for menu to render/animate
+            setTimeout(callback, 150);
+        } else {
+            callback();
+        }
+    }, [isMobile, openMobileMenu]);
+
+    const startTour = useCallback(() => {
         setShowWelcome(false);
         sessionStorage.setItem('onboarding_active', 'true');
 
         // Wait for modal to unmount before starting tour
         setTimeout(() => {
+            // Element selectors based on screen size
+            const prefix = isMobile ? '#mobile-nav-' : '#nav-';
+
+            const createStep = (
+                elementId: string,
+                title: string,
+                description: string,
+                nextPage?: string
+            ): DriveStep => ({
+                element: `${prefix}${elementId}`,
+                popover: {
+                    title,
+                    description,
+                    ...(nextPage && {
+                        onNextClick: () => {
+                            router.push(nextPage);
+                            // On mobile, re-open menu after navigation for next step
+                            if (isMobile) {
+                                setTimeout(() => {
+                                    openMobileMenu();
+                                }, 300);
+                            }
+                            driverObj.moveNext();
+                        }
+                    })
+                }
+            });
+
+            const steps: DriveStep[] = [
+                createStep('dashboard', 'Dashboard', 'Your main command center. Track daily streaks and progress here.', '/tracks'),
+                createStep('tracks', 'Materi Belajar', 'Access all your courses and modules here.', '/community'),
+                createStep('community', 'Komunitas', 'Join discussions and connect with other learners.', '/leaderboard'),
+                createStep('leaderboard', 'Papan Peringkat', 'See where you stand against your peers.', '/profile'),
+                createStep('profile', 'Profil Saya', 'Manage your account settings and preferences.')
+            ];
+
             const driverObj = driver({
                 showProgress: true,
                 animate: true,
@@ -57,6 +120,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                 nextBtnText: 'Next',
                 prevBtnText: 'Previous',
                 allowClose: true,
+                popoverClass: 'onboarding-popover',
                 onDestroyed: () => {
                     // Ensure we mark specific completion if destroyed
                     const storageKey = `zenith_onboarding_completed_${user?.email}`;
@@ -64,64 +128,15 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                         handleComplete();
                     }
                 },
-                steps: [
-                    {
-                        element: '#nav-dashboard',
-                        popover: {
-                            title: 'Dashboard',
-                            description: 'Your main command center. Track daily streaks and progress here.',
-                            onNextClick: () => {
-                                router.push('/tracks');
-                                driverObj.moveNext();
-                            }
-                        }
-                    },
-                    {
-                        element: '#nav-tracks',
-                        popover: {
-                            title: 'Materi Belajar',
-                            description: 'Access all your courses and modules here.',
-                            onNextClick: () => {
-                                router.push('/community');
-                                driverObj.moveNext();
-                            }
-                        }
-                    },
-                    {
-                        element: '#nav-community',
-                        popover: {
-                            title: 'Komunitas',
-                            description: 'Join discussions and connect with other learners.',
-                            onNextClick: () => {
-                                router.push('/leaderboard');
-                                driverObj.moveNext();
-                            }
-                        }
-                    },
-                    {
-                        element: '#nav-leaderboard',
-                        popover: {
-                            title: 'Papan Peringkat',
-                            description: 'See where you stand against your peers.',
-                            onNextClick: () => {
-                                router.push('/profile');
-                                driverObj.moveNext();
-                            }
-                        }
-                    },
-                    {
-                        element: '#nav-profile',
-                        popover: {
-                            title: 'Profil Saya',
-                            description: 'Manage your account settings and preferences.'
-                        }
-                    }
-                ]
+                steps
             });
 
-            driverObj.drive();
+            // On mobile, open the menu before starting the tour
+            ensureMobileMenuOpen(() => {
+                driverObj.drive();
+            });
         }, 100);
-    };
+    }, [isMobile, openMobileMenu, router, user?.email, handleComplete, ensureMobileMenuOpen]);
 
     const handleSkipWelcome = () => {
         setShowWelcome(false);
