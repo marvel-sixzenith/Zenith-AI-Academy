@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/Button';
 import clsx from 'clsx';
 import TrackCardInteractive from '@/components/learning/TrackCardInteractive';
 import { checkAndUpdateStreak } from '@/lib/user-streaks';
+import OnboardingModal from '@/components/onboarding/OnboardingModal';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -158,6 +159,8 @@ export default async function DashboardPage() {
                     ))}
                 </div>
             </div>
+            {/* Onboarding Tour */}
+            <OnboardingModal />
         </div>
     );
 }

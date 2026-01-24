@@ -6,6 +6,8 @@ import LessonContentRenderer from '@/components/learning/LessonContentRenderer';
 import LessonCompleteButton from '@/components/learning/LessonCompleteButton';
 import LessonUpdateWatcher from '@/components/learning/LessonUpdateWatcher';
 import { getLessonById } from '@/lib/lessons';
+import { ErrorBoundary } from 'react-error-boundary';
+import LessonErrorFallback from '@/components/learning/LessonErrorFallback';
 
 interface LessonPageProps {
     params: Promise<{ lessonId: string }>;
@@ -93,16 +95,23 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
                     {/* Content Renderer */}
                     <div className="mb-8">
-                        <LessonContentRenderer
-                            contentType={lesson.contentType}
-                            contentData={lesson.contentData}
-                            lessonId={lesson.id}
-                            lessonTitle={lesson.title}
-                            isPreviewMode={isAdmin}
-                            currentSubmission={lesson.currentSubmission}
-                            userProgress={lesson.userProgress}
-                            navigation={navigation}
-                        />
+                        <ErrorBoundary
+                            FallbackComponent={LessonErrorFallback}
+                            onReset={() => {
+                                // Optional: Reset logic (like clearing cache) if needed
+                            }}
+                        >
+                            <LessonContentRenderer
+                                contentType={lesson.contentType}
+                                contentData={lesson.contentData}
+                                lessonId={lesson.id}
+                                lessonTitle={lesson.title}
+                                isPreviewMode={isAdmin}
+                                currentSubmission={lesson.currentSubmission}
+                                userProgress={lesson.userProgress}
+                                navigation={navigation}
+                            />
+                        </ErrorBoundary>
                     </div>
 
                     {/* Action Buttons - Hide for Assignments as they have their own submission flow */}
