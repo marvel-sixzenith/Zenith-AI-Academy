@@ -15,13 +15,15 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
     const router = useRouter();
 
     useEffect(() => {
-        // Only show if user hasn't completed onboarding
-        if (user && !user.hasCompletedOnboarding) {
+        // Only show if user hasn't completed onboarding AND tour isn't already active
+        const isTourActive = sessionStorage.getItem('onboarding_active');
+        if (user && !user.hasCompletedOnboarding && !isTourActive) {
             setShowWelcome(true);
         }
     }, [user]);
 
     const handleComplete = async () => {
+        sessionStorage.removeItem('onboarding_active');
         try {
             await fetch('/api/user/onboarding', { method: 'POST' });
             router.refresh();
@@ -32,6 +34,7 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
 
     const startTour = () => {
         setShowWelcome(false);
+        sessionStorage.setItem('onboarding_active', 'true');
 
         // Wait for modal to unmount before starting tour
         setTimeout(() => {
@@ -50,44 +53,28 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                         element: '#nav-dashboard',
                         popover: {
                             title: 'Dashboard',
-                            description: 'Your main command center. Track daily streaks and progress here.',
-                            onNextClick: () => {
-                                router.push('/dashboard');
-                                driverObj.moveNext();
-                            }
+                            description: 'Your main command center. Track daily streaks and progress here.'
                         }
                     },
                     {
                         element: '#nav-tracks',
                         popover: {
                             title: 'Materi Belajar',
-                            description: 'Access all your courses and modules here.',
-                            onNextClick: () => {
-                                router.push('/tracks');
-                                driverObj.moveNext();
-                            }
+                            description: 'Access all your courses and modules here.'
                         }
                     },
                     {
                         element: '#nav-community',
                         popover: {
                             title: 'Komunitas',
-                            description: 'Join discussions and connect with other learners.',
-                            onNextClick: () => {
-                                router.push('/community');
-                                driverObj.moveNext();
-                            }
+                            description: 'Join discussions and connect with other learners.'
                         }
                     },
                     {
                         element: '#nav-leaderboard',
                         popover: {
                             title: 'Papan Peringkat',
-                            description: 'See where you stand against your peers.',
-                            onNextClick: () => {
-                                router.push('/leaderboard');
-                                driverObj.moveNext();
-                            }
+                            description: 'See where you stand against your peers.'
                         }
                     },
                     {
