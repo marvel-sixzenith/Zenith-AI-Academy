@@ -50,10 +50,17 @@ export function MobileMenuProvider({ children }: MobileMenuProviderProps) {
     );
 }
 
-export function useMobileMenu() {
+export function useMobileMenu(): MobileMenuContextType {
     const context = useContext(MobileMenuContext);
+    // Return safe defaults for SSR and when used outside provider
     if (context === undefined) {
-        throw new Error('useMobileMenu must be used within a MobileMenuProvider');
+        return {
+            isMobileMenuOpen: false,
+            setMobileMenuOpen: () => { },
+            openMobileMenu: () => { },
+            closeMobileMenu: () => { },
+            toggleMobileMenu: () => { }
+        };
     }
     return context;
 }
