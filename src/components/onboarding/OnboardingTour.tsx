@@ -15,8 +15,12 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
     const router = useRouter();
 
     useEffect(() => {
+        if (!user?.email) return;
+
         // Check local storage first to prevent stale session loop
-        const isLocalCompleted = localStorage.getItem('zenith_onboarding_completed');
+        // Use email-specific key so different accounts on same browser don't block each other
+        const storageKey = `zenith_onboarding_completed_${user.email}`;
+        const isLocalCompleted = localStorage.getItem(storageKey);
         const isTourActive = sessionStorage.getItem('onboarding_active');
 
         if (user && !user.hasCompletedOnboarding && !isLocalCompleted && !isTourActive) {
@@ -25,8 +29,11 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
     }, [user]);
 
     const handleComplete = async () => {
+        if (!user?.email) return;
+
         // Set local lock immediately to prevent loop
-        localStorage.setItem('zenith_onboarding_completed', 'true');
+        const storageKey = `zenith_onboarding_completed_${user.email}`;
+        localStorage.setItem(storageKey, 'true');
         sessionStorage.removeItem('onboarding_active');
 
         try {
@@ -52,8 +59,8 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
                 allowClose: true,
                 onDestroyed: () => {
                     // Ensure we mark specific completion if destroyed
-                    // But handleComplete sets the permanent lock
-                    if (!localStorage.getItem('zenith_onboarding_completed')) {
+                    const storageKey = `zenith_onboarding_completed_${user?.email}`;
+                    if (!localStorage.getItem(storageKey)) {
                         handleComplete();
                     }
                 },
