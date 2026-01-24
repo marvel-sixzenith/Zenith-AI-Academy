@@ -50,11 +50,13 @@ interface Lesson {
 function SortableLessonItem({
     lesson,
     onEdit,
-    onDelete
+    onDelete,
+    dragEnabled = true
 }: {
     lesson: Lesson;
     onEdit: (lesson: Lesson) => void;
     onDelete: (id: string) => void;
+    dragEnabled?: boolean;
 }) {
     const {
         attributes,
@@ -63,7 +65,7 @@ function SortableLessonItem({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: lesson.id });
+    } = useSortable({ id: lesson.id, disabled: !dragEnabled });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -79,14 +81,16 @@ function SortableLessonItem({
         >
             <div className="flex items-center gap-3">
                 {/* Drag Handle */}
-                <button
-                    {...attributes}
-                    {...listeners}
-                    className="p-1.5 rounded-lg cursor-grab hover:bg-[var(--background-card)] text-[var(--text-muted)] active:cursor-grabbing"
-                    title="Drag to reorder"
-                >
-                    <GripVertical className="w-5 h-5" />
-                </button>
+                {dragEnabled && (
+                    <button
+                        {...attributes}
+                        {...listeners}
+                        className="p-1.5 rounded-lg cursor-grab hover:bg-[var(--background-card)] text-[var(--text-muted)] active:cursor-grabbing"
+                        title="Drag to reorder"
+                    >
+                        <GripVertical className="w-5 h-5" />
+                    </button>
+                )}
 
                 <div>
                     <div className="flex items-center gap-2">
@@ -428,9 +432,14 @@ export default function LessonManager() {
 
     const previewData = getPreviewData();
 
-    const handleAddNew = () => {
+    const handleAddNew = (prefillModuleId?: string) => {
+        // If passed explicit ID (from group header), use it.
+        // Else if filtering by module, use that.
+        // Else empty.
+        const targetModuleId = typeof prefillModuleId === 'string' ? prefillModuleId : (selectedModuleFilter !== 'all' ? selectedModuleFilter : '');
+
         setFormData({
-            moduleId: selectedModuleFilter !== 'all' ? selectedModuleFilter : '',
+            moduleId: targetModuleId,
             title: '',
             contentType: 'VIDEO',
             contentData: '{}',
@@ -448,7 +457,7 @@ export default function LessonManager() {
         <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-4">
                 {!showForm && (
-                    <button onClick={handleAddNew} className="btn-primary">
+                    <button onClick={() => handleAddNew()} className="btn-primary">
                         <Plus className="w-5 h-5" />
                         Add New Lesson
                     </button>
@@ -633,44 +642,89 @@ export default function LessonManager() {
             )}
 
             {/* Lessons List with Drag and Drop */}
-            <div className="glass-card overflow-hidden">
-                <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30">
-                    <div className="flex items-center gap-2">
-                        <GripVertical className="w-4 h-4 text-[var(--text-muted)]" />
-                        <span className="text-sm text-[var(--text-muted)]">
-                            Drag lessons to reorder them within the selected module
-                        </span>
-                    </div>
-                </div>
+            {/* Grouped View for 'All Modules' */}
+            {selectedModuleFilter === 'all' ? (
+                <div className="space-y-8">
+                    {modules.map(module => {
+                        const moduleLessons = lessons.filter(l => l.moduleId === module.id);
+                        return (
+                            <div key={module.id} className="glass-card overflow-hidden">
+                                <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-1 rounded">
+                                            {module.track?.name}
+                                        </span>
+                                        <h3 className="font-bold text-lg">{module.name}</h3>
+                                        <span className="text-sm text-[var(--text-muted)] ml-2">({moduleLessons.length} lessons)</span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleAddNew(module.id)}
+                                        className="text-xs btn-secondary py-1 px-3 flex items-center gap-1"
+                                    >
+                                        <Plus className="w-3 h-3" />
+                                        Add Lesson
+                                    </button>
+                                </div>
 
-                {filteredLessons.length === 0 ? (
-                    <div className="p-8 text-center text-[var(--text-muted)]">
-                        {selectedModuleFilter === 'all'
-                            ? 'No lessons yet. Create modules first, then add lessons!'
-                            : 'No lessons in this module yet.'}
+                                <div>
+                                    {moduleLessons.length === 0 ? (
+                                        <div className="p-6 text-center text-sm text-[var(--text-muted)] italic">
+                                            No lessons in this module.
+                                        </div>
+                                    ) : (
+                                        moduleLessons.map(lesson => (
+                                            <SortableLessonItem
+                                                key={lesson.id}
+                                                lesson={lesson}
+                                                onEdit={handleEdit}
+                                                onDelete={handleDelete}
+                                                dragEnabled={false}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="glass-card overflow-hidden">
+                    <div className="p-4 border-b border-[var(--border-color)] bg-[var(--background-secondary)]/30">
+                        <div className="flex items-center gap-2">
+                            <GripVertical className="w-4 h-4 text-[var(--text-muted)]" />
+                            <span className="text-sm text-[var(--text-muted)]">
+                                Drag lessons to reorder them within the selected module
+                            </span>
+                        </div>
                     </div>
-                ) : (
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <SortableContext
-                            items={filteredLessons.map(l => l.id)}
-                            strategy={verticalListSortingStrategy}
+
+                    {filteredLessons.length === 0 ? (
+                        <div className="p-8 text-center text-[var(--text-muted)]">
+                            No lessons in this module yet.
+                        </div>
+                    ) : (
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
                         >
-                            {filteredLessons.map((lesson) => (
-                                <SortableLessonItem
-                                    key={lesson.id}
-                                    lesson={lesson}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                />
-                            ))}
-                        </SortableContext>
-                    </DndContext>
-                )}
-            </div>
+                            <SortableContext
+                                items={filteredLessons.map(l => l.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {filteredLessons.map((lesson) => (
+                                    <SortableLessonItem
+                                        key={lesson.id}
+                                        lesson={lesson}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

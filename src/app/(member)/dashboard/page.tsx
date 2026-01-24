@@ -160,7 +160,7 @@ export default async function DashboardPage() {
                 </div>
             </div>
             {/* Onboarding Tour */}
-            <OnboardingModal />
+            <OnboardingModal userId={userId} />
         </div>
     );
 }

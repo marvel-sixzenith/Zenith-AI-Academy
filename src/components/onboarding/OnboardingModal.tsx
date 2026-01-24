@@ -5,23 +5,32 @@ import { X, ChevronRight, Check, Trophy, BookOpen, Wrench, Rocket } from 'lucide
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 
-export default function OnboardingModal() {
+interface OnboardingModalProps {
+    userId: string;
+}
+
+export default function OnboardingModal({ userId }: OnboardingModalProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [step, setStep] = useState(0);
 
     useEffect(() => {
-        // Check if user has seen onboarding
-        const hasSeen = localStorage.getItem('zenith_has_seen_onboarding');
+        if (!userId) return;
+
+        // Check if user has seen onboarding (User specific)
+        const storageKey = `zenith_onboarding_seen_${userId}`;
+        const hasSeen = localStorage.getItem(storageKey);
+
         if (!hasSeen) {
             // Small delay for entrance animation
             const timer = setTimeout(() => setIsOpen(true), 1000);
             return () => clearTimeout(timer);
         }
-    }, []);
+    }, [userId]);
 
     const handleClose = () => {
         setIsOpen(false);
-        localStorage.setItem('zenith_has_seen_onboarding', 'true');
+        const storageKey = `zenith_onboarding_seen_${userId}`;
+        localStorage.setItem(storageKey, 'true');
     };
 
     const handleNext = () => {
