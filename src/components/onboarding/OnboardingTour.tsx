@@ -33,57 +33,75 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
     const startTour = () => {
         setShowWelcome(false);
 
-        const driverObj = driver({
-            showProgress: true,
-            animate: true,
-            doneBtnText: 'Finish',
-            nextBtnText: 'Next',
-            prevBtnText: 'Previous',
-            allowClose: true,
-            onDestroyed: () => {
-                // Mark as completed regardless of whether they finished or skipped mid-tour
-                handleComplete();
-            },
-            steps: [
-                {
-                    element: '#nav-dashboard',
-                    popover: {
-                        title: 'Dashboard',
-                        description: 'Your main command center. Track daily streaks and progress here.'
-                    }
+        // Wait for modal to unmount before starting tour
+        setTimeout(() => {
+            const driverObj = driver({
+                showProgress: true,
+                animate: true,
+                doneBtnText: 'Finish',
+                nextBtnText: 'Next',
+                prevBtnText: 'Previous',
+                allowClose: true,
+                onDestroyed: () => {
+                    handleComplete();
                 },
-                {
-                    element: '#nav-tracks',
-                    popover: {
-                        title: 'Materi Belajar',
-                        description: 'Access all your courses and modules here.'
+                steps: [
+                    {
+                        element: '#nav-dashboard',
+                        popover: {
+                            title: 'Dashboard',
+                            description: 'Your main command center. Track daily streaks and progress here.',
+                            onNextClick: () => {
+                                router.push('/dashboard');
+                                driverObj.moveNext();
+                            }
+                        }
+                    },
+                    {
+                        element: '#nav-tracks',
+                        popover: {
+                            title: 'Materi Belajar',
+                            description: 'Access all your courses and modules here.',
+                            onNextClick: () => {
+                                router.push('/tracks');
+                                driverObj.moveNext();
+                            }
+                        }
+                    },
+                    {
+                        element: '#nav-community',
+                        popover: {
+                            title: 'Komunitas',
+                            description: 'Join discussions and connect with other learners.',
+                            onNextClick: () => {
+                                router.push('/community');
+                                driverObj.moveNext();
+                            }
+                        }
+                    },
+                    {
+                        element: '#nav-leaderboard',
+                        popover: {
+                            title: 'Papan Peringkat',
+                            description: 'See where you stand against your peers.',
+                            onNextClick: () => {
+                                router.push('/leaderboard');
+                                driverObj.moveNext();
+                            }
+                        }
+                    },
+                    {
+                        element: '#nav-profile',
+                        popover: {
+                            title: 'Profil Saya',
+                            description: 'Manage your account settings and preferences.'
+                        }
                     }
-                },
-                {
-                    element: '#nav-community',
-                    popover: {
-                        title: 'Komunitas',
-                        description: 'Join discussions and connect with other learners.'
-                    }
-                },
-                {
-                    element: '#nav-leaderboard',
-                    popover: {
-                        title: 'Papan Peringkat',
-                        description: 'See where you stand against your peers.'
-                    }
-                },
-                {
-                    element: '#nav-profile',
-                    popover: {
-                        title: 'Profil Saya',
-                        description: 'Manage your account settings and preferences.'
-                    }
-                }
-            ]
-        });
+                ]
+            });
 
-        driverObj.drive();
+            driverObj.drive();
+        }, 100);
     };
 
     const handleSkipWelcome = () => {
