@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { driver, Driver, DriveStep } from 'driver.js';
-import 'driver.js/dist/driver.css';
+import type { Driver, DriveStep } from 'driver.js';
 import { useRouter } from 'next/navigation';
 import { Rocket } from 'lucide-react';
 import { useMobileMenu } from '@/components/layout/MobileMenuContext';
@@ -68,9 +67,14 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
         }
     }, [user?.email, router]);
 
-    const startTour = useCallback(() => {
+    const startTour = useCallback(async () => {
         setShowWelcome(false);
         sessionStorage.setItem('onboarding_active', 'true');
+
+        // Dynamically import driver.js and its CSS
+        const { driver } = await import('driver.js');
+        // @ts-ignore
+        await import('driver.js/dist/driver.css');
 
         // Check current screen size at tour start time
         const isMobileNow = window.innerWidth < MOBILE_BREAKPOINT;
