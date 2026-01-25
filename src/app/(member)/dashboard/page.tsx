@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
-import { Wrench, Briefcase, Rocket, Lock, ChevronRight, Trophy, Flame, Target } from 'lucide-react';
+import { Wrench, ChevronRight, Trophy, Flame, Target } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { getTracks } from '@/lib/tracks';
 import { getLastActiveLesson } from '@/lib/user-progress';
@@ -10,6 +10,7 @@ import clsx from 'clsx';
 import InteractiveTrackList from '@/components/learning/InteractiveTrackList';
 import { checkAndUpdateStreak } from '@/lib/user-streaks';
 import OnboardingTour from '@/components/onboarding/OnboardingTour';
+import { AnimatedDashboard, AnimatedItem, AnimatedCard, AnimatedGrid } from '@/components/dashboard/AnimatedDashboard';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -56,53 +57,59 @@ export default async function DashboardPage() {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in pb-8">
+        <AnimatedDashboard className="space-y-8 pb-8">
             {/* Welcome Header */}
-            <div>
+            <AnimatedItem>
                 <h1 className="text-3xl font-bold mb-2">
                     Selamat datang kembali, <span className="text-gradient">{userName}</span>!
                 </h1>
                 <p className="text-[var(--text-secondary)]">
                     Lanjutkan perjalanan belajar Anda dari tempat terakhir.
                 </p>
-            </div>
+            </AnimatedItem>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-6 flex items-center gap-5 hover:border-[var(--primary)]/30 transition-colors">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--primary)]/5 flex items-center justify-center border border-[var(--primary)]/10">
-                        <Trophy className="w-7 h-7 text-[var(--primary)]" />
-                    </div>
-                    <div>
-                        <p className="text-3xl font-bold leading-none mb-1">{stats.totalPoints.toLocaleString()}</p>
-                        <p className="text-sm text-[var(--text-muted)] font-medium">Total Poin</p>
-                    </div>
-                </Card>
+            <AnimatedGrid className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <AnimatedCard>
+                    <Card className="p-6 flex items-center gap-5 hover:border-[var(--primary)]/30 transition-colors">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--primary)]/5 flex items-center justify-center border border-[var(--primary)]/10">
+                            <Trophy className="w-7 h-7 text-[var(--primary)]" />
+                        </div>
+                        <div>
+                            <p className="text-3xl font-bold leading-none mb-1">{stats.totalPoints.toLocaleString()}</p>
+                            <p className="text-sm text-[var(--text-muted)] font-medium">Total Poin</p>
+                        </div>
+                    </Card>
+                </AnimatedCard>
 
-                <Card className="p-6 flex items-center gap-5 hover:border-[var(--warning)]/30 transition-colors">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--warning)]/20 to-[var(--warning)]/5 flex items-center justify-center border border-[var(--warning)]/10">
-                        <Flame className="w-7 h-7 text-[var(--warning)]" />
-                    </div>
-                    <div>
-                        <p className="text-3xl font-bold leading-none mb-1">{stats.streak} hari</p>
-                        <p className="text-sm text-[var(--text-muted)] font-medium">Streak Saat Ini</p>
-                    </div>
-                </Card>
+                <AnimatedCard>
+                    <Card className="p-6 flex items-center gap-5 hover:border-[var(--warning)]/30 transition-colors">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--warning)]/20 to-[var(--warning)]/5 flex items-center justify-center border border-[var(--warning)]/10">
+                            <Flame className="w-7 h-7 text-[var(--warning)]" />
+                        </div>
+                        <div>
+                            <p className="text-3xl font-bold leading-none mb-1">{stats.streak} hari</p>
+                            <p className="text-sm text-[var(--text-muted)] font-medium">Streak Saat Ini</p>
+                        </div>
+                    </Card>
+                </AnimatedCard>
 
-                <Card className="p-6 flex items-center gap-5 hover:border-[var(--success)]/30 transition-colors">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--success)]/20 to-[var(--success)]/5 flex items-center justify-center border border-[var(--success)]/10">
-                        <Target className="w-7 h-7 text-[var(--success)]" />
-                    </div>
-                    <div>
-                        <p className="text-3xl font-bold leading-none mb-1">#{stats.rank || '-'}</p>
-                        <p className="text-sm text-[var(--text-muted)] font-medium">Peringkat</p>
-                    </div>
-                </Card>
-            </div>
+                <AnimatedCard>
+                    <Card className="p-6 flex items-center gap-5 hover:border-[var(--success)]/30 transition-colors">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--success)]/20 to-[var(--success)]/5 flex items-center justify-center border border-[var(--success)]/10">
+                            <Target className="w-7 h-7 text-[var(--success)]" />
+                        </div>
+                        <div>
+                            <p className="text-3xl font-bold leading-none mb-1">#{stats.rank || '-'}</p>
+                            <p className="text-sm text-[var(--text-muted)] font-medium">Peringkat</p>
+                        </div>
+                    </Card>
+                </AnimatedCard>
+            </AnimatedGrid>
 
             {/* Continue Learning */}
             {lastLesson && (
-                <div>
+                <AnimatedItem>
                     <h2 className="text-xl font-bold mb-4">Lanjutkan Belajar</h2>
                     <Card className="p-6 border-[var(--primary)]/30 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-32 bg-[var(--primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -135,11 +142,11 @@ export default async function DashboardPage() {
                             </Link>
                         </div>
                     </Card>
-                </div>
+                </AnimatedItem>
             )}
 
             {/* Learning Tracks */}
-            <div>
+            <AnimatedItem>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold">Track Pembelajaran Anda</h2>
                     <Link
@@ -152,9 +159,10 @@ export default async function DashboardPage() {
                 </div>
 
                 <InteractiveTrackList tracks={tracks} />
-            </div>
+            </AnimatedItem>
+
             {/* Onboarding Tour */}
             <OnboardingTour user={user} />
-        </div>
+        </AnimatedDashboard>
     );
 }

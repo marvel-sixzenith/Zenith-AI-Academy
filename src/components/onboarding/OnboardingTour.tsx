@@ -6,6 +6,7 @@ import 'driver.js/dist/driver.css';
 import { useRouter } from 'next/navigation';
 import { Rocket } from 'lucide-react';
 import { useMobileMenu } from '@/components/layout/MobileMenuContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface OnboardingTourProps {
     user: any;
@@ -180,41 +181,83 @@ export default function OnboardingTour({ user }: OnboardingTourProps) {
         handleComplete();
     };
 
-    // Don't render anything on server or if not showing welcome
-    if (!isClient || !showWelcome) return null;
+    // Don't render anything on server
+    if (!isClient) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" />
+        <AnimatePresence>
+            {showWelcome && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    {/* Backdrop with fade animation */}
+                    <motion.div
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                    />
 
-            <div className="relative w-full max-w-md bg-[#0B1221] border border-[var(--border-color)] rounded-2xl shadow-2xl p-8 animate-in zoom-in-95 duration-300 text-center">
-                <div className="w-16 h-16 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-6">
-                    <Rocket className="w-8 h-8" />
-                </div>
-
-                <h2 className="text-2xl font-bold mb-4 text-white">
-                    Welcome to Zenith AI Academy, {user?.name?.split(' ')[0]}!
-                </h2>
-
-                <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
-                    Let's get you set up for success. Take a quick tour of your command center.
-                </p>
-
-                <div className="flex gap-3 justify-center">
-                    <button
-                        onClick={handleSkipWelcome}
-                        className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors font-medium"
+                    {/* Modal with scale + fade animation */}
+                    <motion.div
+                        className="relative w-full max-w-md bg-[#0B1221] border border-[var(--border-color)] rounded-2xl shadow-2xl p-8 text-center"
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                        transition={{
+                            duration: 0.3,
+                            ease: [0.25, 0.46, 0.45, 0.94]
+                        }}
                     >
-                        Skip
-                    </button>
-                    <button
-                        onClick={startTour}
-                        className="px-6 py-2 rounded-xl bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 transition shadow-lg shadow-blue-500/20 font-medium"
-                    >
-                        Start Tour
-                    </button>
+                        <motion.div
+                            className="w-16 h-16 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-6"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 15 }}
+                        >
+                            <Rocket className="w-8 h-8" />
+                        </motion.div>
+
+                        <motion.h2
+                            className="text-2xl font-bold mb-4 text-white"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.3 }}
+                        >
+                            Welcome to Zenith AI Academy, {user?.name?.split(' ')[0]}!
+                        </motion.h2>
+
+                        <motion.p
+                            className="text-[var(--text-secondary)] mb-8 leading-relaxed"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25, duration: 0.3 }}
+                        >
+                            Let's get you set up for success. Take a quick tour of your command center.
+                        </motion.p>
+
+                        <motion.div
+                            className="flex gap-3 justify-center"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.3 }}
+                        >
+                            <button
+                                onClick={handleSkipWelcome}
+                                className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors font-medium"
+                            >
+                                Skip
+                            </button>
+                            <button
+                                onClick={startTour}
+                                className="px-6 py-2 rounded-xl bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 transition shadow-lg shadow-blue-500/20 font-medium"
+                            >
+                                Start Tour
+                            </button>
+                        </motion.div>
+                    </motion.div>
                 </div>
-            </div>
-        </div>
+            )}
+        </AnimatePresence>
     );
 }
+
