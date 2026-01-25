@@ -124,10 +124,10 @@ export default function TrackCardInteractive({ track, isExpanded: controlledExpa
                     className="w-full"
                     onClick={(e) => track.isLocked && e.preventDefault()}
                 >
-                    <button className="w-full py-2 bg-[var(--background-card)] hover:bg-[var(--primary)] hover:text-white border border-[var(--border-color)] hover:border-[var(--primary)] rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium">
+                    <div className="w-full py-2 bg-[var(--background-card)] hover:bg-[var(--primary)] hover:text-white border border-[var(--border-color)] hover:border-[var(--primary)] rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium">
                         Lihat Detail
                         <ChevronRight className="w-4 h-4" />
-                    </button>
+                    </div>
                 </Link>
             </div>
         </Card>
