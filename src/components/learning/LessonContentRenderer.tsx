@@ -1,4 +1,8 @@
-import VideoPlayer from './VideoPlayer';
+'use client';
+
+import dynamic from 'next/dynamic';
+
+const VideoPlayer = dynamic(() => import('./VideoPlayer'), { ssr: false });
 import PdfViewer from './content/PdfViewer';
 import QuizRunner from './content/QuizRunner';
 import AssignmentView from './content/AssignmentView';

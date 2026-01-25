@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { Zap, Menu, X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function LandingHeader() {
+interface LandingHeaderProps {
+    user?: any;
+}
+
+export default function LandingHeader({ user }: LandingHeaderProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -38,8 +42,8 @@ export default function LandingHeader() {
         <>
             <header
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${isScrolled
-                        ? 'bg-[#0a0a0f]/90 backdrop-blur-xl border-white/5 py-3'
-                        : 'bg-transparent border-transparent py-5'
+                    ? 'bg-[#0a0a0f]/90 backdrop-blur-xl border-white/5 py-3'
+                    : 'bg-transparent border-transparent py-5'
                     }`}
             >
                 <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -68,19 +72,31 @@ export default function LandingHeader() {
 
                     {/* Auth Buttons & Mobile Toggle */}
                     <div className="flex items-center gap-3 relative z-50">
-                        <Link
-                            href="/login"
-                            className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-white transition-colors"
-                        >
-                            Masuk
-                        </Link>
-                        <Link
-                            href="/register"
-                            className="hidden sm:flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-                        >
-                            <span>Daftar Gratis</span>
-                            <ChevronRight className="w-4 h-4" />
-                        </Link>
+                        {user ? (
+                            <Link
+                                href="/dashboard"
+                                className="hidden sm:flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                            >
+                                <span>Dashboard</span>
+                                <ChevronRight className="w-4 h-4" />
+                            </Link>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-white transition-colors"
+                                >
+                                    Masuk
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="hidden sm:flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-full shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                                >
+                                    <span>Daftar Gratis</span>
+                                    <ChevronRight className="w-4 h-4" />
+                                </Link>
+                            </>
+                        )}
 
                         {/* Mobile Menu Button */}
                         <button
@@ -128,20 +144,32 @@ export default function LandingHeader() {
                             transition={{ delay: 0.3 }}
                             className="mt-auto space-y-3"
                         >
-                            <Link
-                                href="/login"
-                                className="flex items-center justify-center w-full p-4 text-center font-medium text-[var(--text-secondary)] hover:text-white border border-white/10 rounded-2xl hover:bg-white/5 transition-all"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                Masuk
-                            </Link>
-                            <Link
-                                href="/register"
-                                className="flex items-center justify-center w-full p-4 text-center font-bold text-white bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                Daftar Gratis Sekarang
-                            </Link>
+                            {user ? (
+                                <Link
+                                    href="/dashboard"
+                                    className="flex items-center justify-center w-full p-4 text-center font-bold text-white bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    Ke Dashboard
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link
+                                        href="/login"
+                                        className="flex items-center justify-center w-full p-4 text-center font-medium text-[var(--text-secondary)] hover:text-white border border-white/10 rounded-2xl hover:bg-white/5 transition-all"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        Masuk
+                                    </Link>
+                                    <Link
+                                        href="/register"
+                                        className="flex items-center justify-center w-full p-4 text-center font-bold text-white bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        Daftar Gratis Sekarang
+                                    </Link>
+                                </>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}
