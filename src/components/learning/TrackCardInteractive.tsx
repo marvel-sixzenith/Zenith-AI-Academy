@@ -42,7 +42,7 @@ export default function TrackCardInteractive({ track, isExpanded: controlledExpa
 
     return (
         <Card className={clsx(
-            "p-6 group relative overflow-visible h-full transition-all duration-300 hover:border-blue-500/40 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]",
+            "p-4 md:p-6 group relative overflow-visible h-full transition-all duration-300 hover:border-blue-500/40 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]",
             track.isLocked && 'cursor-not-allowed opacity-70'
         )}>
             {/* Lock Overlay */}
@@ -63,22 +63,22 @@ export default function TrackCardInteractive({ track, isExpanded: controlledExpa
                 <div className="flex justify-between items-start">
                     {/* Track Icon */}
                     <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition group-hover:scale-110"
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 md:mb-4 transition group-hover:scale-110"
                         style={{ backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)` }}
                     >
-                        <Icon className="w-7 h-7" style={{ color }} />
+                        <Icon className="w-5 h-5 md:w-6 md:h-6" style={{ color }} />
                     </div>
                 </div>
 
                 {/* Track Info */}
-                <h3 className="text-lg font-bold mb-2">{track.name}</h3>
-                <p className="text-sm text-[var(--text-secondary)] mb-4 line-clamp-2">
+                <h3 className="text-base md:text-lg font-bold mb-1 md:mb-2">{track.name}</h3>
+                <p className="text-xs md:text-sm text-[var(--text-secondary)] mb-3 md:mb-4 line-clamp-2">
                     {track.description}
                 </p>
 
                 {/* Progress */}
-                <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between text-sm">
+                <div className="space-y-1.5 md:space-y-2 mb-3 md:mb-4">
+                    <div className="flex items-center justify-between text-xs md:text-sm">
                         <span className="text-[var(--text-muted)]">Progres</span>
                         <span className="font-medium">{track.progress}%</span>
                     </div>
@@ -88,9 +88,9 @@ export default function TrackCardInteractive({ track, isExpanded: controlledExpa
                             style={{ width: `${track.progress}%` }}
                         />
                     </div>
-                    <div className="flex justify-between items-center text-xs text-[var(--text-muted)]">
+                    <div className="flex justify-between items-center text-[10px] md:text-xs text-[var(--text-muted)]">
                         <span>{track.completedLessons} dari {track.totalLessons} pelajaran</span>
-                        <ChevronDown className={clsx("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
+                        <ChevronDown className={clsx("w-3 h-3 md:w-4 md:h-4 transition-transform", isExpanded && "rotate-180")} />
                     </div>
                 </div>
             </div>

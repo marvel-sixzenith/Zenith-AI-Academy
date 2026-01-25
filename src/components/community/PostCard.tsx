@@ -35,54 +35,54 @@ export default function PostCard({ post, currentUserId, currentUserRole }: { pos
     };
 
     return (
-        <div className="glass-card p-6 transition">
+        <div className="glass-card p-4 md:p-6 transition">
             {/* Header */}
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-medium shrink-0">
+            <div className="flex items-start justify-between mb-3 md:mb-4">
+                <div className="flex items-center gap-2.5 md:gap-3">
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-medium shrink-0 text-sm md:text-base">
                         {post.user.name.charAt(0)}
                     </div>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <p className="font-medium">{post.user.name}</p>
+                        <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+                            <p className="font-medium text-sm md:text-base">{post.user.name}</p>
                             {post.user.role === 'ADMIN' && (
-                                <span className="badge badge-success text-xs">Admin</span>
+                                <span className="badge badge-success text-[10px] md:text-xs px-1.5 py-0.5">Admin</span>
                             )}
                             {post.user.role === 'SUPER_ADMIN' && (
-                                <span className="badge badge-warning text-xs">Super Admin</span>
+                                <span className="badge badge-warning text-[10px] md:text-xs px-1.5 py-0.5">Super Admin</span>
                             )}
                         </div>
-                        <p className="text-sm text-[var(--text-muted)]">
+                        <p className="text-xs md:text-sm text-[var(--text-muted)]">
                             {post.channel.name} • {formatTimeAgo(post.createdAt)}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 md:gap-2">
                     {post.isPinned && (
-                        <Pin className="w-5 h-5 text-[var(--warning)]" />
+                        <Pin className="w-4 h-4 md:w-5 md:h-5 text-[var(--warning)]" />
                     )}
                     {post.commentsLocked && (
-                        <Lock className="w-5 h-5 text-[var(--text-muted)]" />
+                        <Lock className="w-4 h-4 md:w-5 md:h-5 text-[var(--text-muted)]" />
                     )}
                 </div>
             </div>
 
             {/* Content */}
-            <h3 className="text-lg font-bold mb-2">{post.title}</h3>
-            <p className="text-[var(--text-secondary)] mb-4 whitespace-pre-wrap">
+            <h3 className="text-base md:text-lg font-bold mb-1.5 md:mb-2">{post.title}</h3>
+            <p className="text-sm md:text-base text-[var(--text-secondary)] mb-3 md:mb-4 whitespace-pre-wrap">
                 {post.content}
             </p>
 
             {/* Footer */}
-            <div className="flex items-center gap-4 text-sm text-[var(--text-muted)] border-t border-[var(--border-color)] pt-4 mt-4">
+            <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-[var(--text-muted)] border-t border-[var(--border-color)] pt-3 md:pt-4 mt-3 md:mt-4">
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="flex items-center gap-2 hover:text-[var(--primary)] transition"
+                    className="flex items-center gap-1.5 md:gap-2 hover:text-[var(--primary)] transition"
                 >
-                    <MessageSquare className="w-4 h-4" />
+                    <MessageSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     <span>{commentCount} comments</span>
-                    {isExpanded ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" /> : <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />}
                 </button>
             </div>
 

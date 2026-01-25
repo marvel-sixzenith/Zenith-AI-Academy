@@ -15,7 +15,7 @@ export default function InteractiveTrackList({ tracks }: InteractiveTrackListPro
     };
 
     return (
-        <div className="grid md:grid-cols-3 gap-6 items-start">
+        <div className="grid md:grid-cols-3 gap-3 md:gap-6 items-start">
             {tracks.map((track) => (
                 <TrackCardInteractive
                     key={track.id}
