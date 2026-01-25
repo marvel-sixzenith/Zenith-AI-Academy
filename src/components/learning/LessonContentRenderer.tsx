@@ -3,9 +3,9 @@
 import dynamic from 'next/dynamic';
 
 const VideoPlayer = dynamic(() => import('./VideoPlayer'), { ssr: false });
-import PdfViewer from './content/PdfViewer';
-import QuizRunner from './content/QuizRunner';
-import AssignmentView from './content/AssignmentView';
+const PdfViewer = dynamic(() => import('./content/PdfViewer'), { ssr: false });
+const QuizRunner = dynamic(() => import('./content/QuizRunner'), { ssr: false });
+const AssignmentView = dynamic(() => import('./content/AssignmentView'), { ssr: false });
 
 interface LessonContentRendererProps {
     contentType: string;
