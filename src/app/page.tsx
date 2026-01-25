@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Rocket, Wrench, Briefcase, ChevronRight, Zap, Users, Trophy, CheckCircle, HelpCircle, Star, ArrowRight } from 'lucide-react';
 import { useEffect, useRef, ReactNode } from 'react';
+import LandingHeader from '@/components/layout/LandingHeader';
 
 // Scroll-triggered animation component
 function AnimatedSection({
@@ -52,36 +53,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass-card border-x-0 border-t-0 rounded-none bg-[var(--background)]/80 backdrop-blur-md animate-fade-in-up">
-        <div className="container flex items-center justify-between h-16 px-4">
-          <Link href="/" className="flex items-center gap-2 text-lg md:text-xl font-bold group">
-            <Zap className="w-5 h-5 md:w-6 md:h-6 text-[var(--primary)] group-hover:text-[var(--primary-light)] transition-colors animate-float" />
-            <span className="text-gradient">Zenith AI Academy</span>
-          </Link>
-          <nav className="hidden lg:flex items-center gap-6">
-            <Link href="#tracks" className="text-[var(--text-secondary)] hover:text-white transition text-sm font-medium hover:scale-105 transition-transform">
-              Program
-            </Link>
-            <Link href="#features" className="text-[var(--text-secondary)] hover:text-white transition text-sm font-medium hover:scale-105 transition-transform">
-              Fitur
-            </Link>
-            <Link href="#curriculum" className="text-[var(--text-secondary)] hover:text-white transition text-sm font-medium hover:scale-105 transition-transform">
-              Kurikulum
-            </Link>
-            <Link href="#faq" className="text-[var(--text-secondary)] hover:text-white transition text-sm font-medium hover:scale-105 transition-transform">
-              FAQ
-            </Link>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden sm:block text-[var(--text-secondary)] hover:text-white transition text-sm font-medium">
-              Masuk
-            </Link>
-            <Link href="/register" className="btn-primary text-xs sm:text-sm py-2 px-4 sm:px-5 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all hover-glow">
-              Daftar Gratis
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero Section */}
       <section className="pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 relative overflow-hidden">

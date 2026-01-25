@@ -7,7 +7,10 @@ import { getUserPoints } from '@/actions/user';
 export default function PointsDisplay() {
     const [points, setPoints] = useState<number | null>(null);
 
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
         const fetchPoints = async () => {
             const latestPoints = await getUserPoints();
             setPoints(latestPoints);
@@ -16,7 +19,7 @@ export default function PointsDisplay() {
         fetchPoints();
     }, []);
 
-    if (points === null) return null; // Loading state (invisible)
+    if (!mounted || points === null) return null; // Loading state (invisible)
 
     return (
         <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--warning)]/10 text-[var(--warning)] rounded-full border border-[var(--warning)]/20">

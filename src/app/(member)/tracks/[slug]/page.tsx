@@ -171,7 +171,7 @@ export default async function TrackPage({ params }: PageProps) {
                             </div>
                         </div>
 
-                        <div className="pl-16 space-y-3 mb-10">
+                        <div className="pl-4 md:pl-16 space-y-3 mb-10">
                             {module.lessons.map((lesson) => {
                                 const typeConfig = TYPE_CONFIG[lesson.contentType as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.DEFAULT;
                                 const TypeIcon = typeConfig.icon;
