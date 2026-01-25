@@ -27,7 +27,7 @@ export default async function MemberLayout({
                 <Sidebar user={session.user} />
                 <div className="flex-1 flex flex-col ml-0 lg:ml-64">
                     <TopNav user={session.user} />
-                    <main className="flex-1 px-4 md:px-6 lg:px-8 py-6 pt-24 md:pt-28">
+                    <main className="flex-1 px-3 md:px-6 lg:px-8 py-4 md:py-6 pt-[60px] md:pt-24">
                         {children}
                     </main>
                 </div>

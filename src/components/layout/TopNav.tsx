@@ -40,7 +40,7 @@ const mobileNavItems = [
 export default function TopNav({ user }: TopNavProps) {
     const { isMobileMenuOpen, toggleMobileMenu, closeMobileMenu } = useMobileMenu();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const isAdmin = user.role === 'ADMIN';
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
 
     const handleSignOut = async () => {
         await signOut({ callbackUrl: '/login' });
@@ -48,52 +48,55 @@ export default function TopNav({ user }: TopNavProps) {
 
     return (
         <>
-            {/* Top Navigation Bar */}
-            <header className="fixed top-0 right-0 left-0 lg:left-64 z-40 h-16 bg-[var(--background-secondary)]/80 backdrop-blur-lg border-b border-[var(--border-color)]">
-                <div className="h-full px-4 flex items-center justify-between">
-                    {/* Mobile Menu Button */}
-                    <button
-                        id="mobile-menu-toggle"
-                        onClick={toggleMobileMenu}
-                        className="lg:hidden p-2 rounded-lg hover:bg-[var(--background-card)] text-[var(--text-secondary)]"
-                    >
-                        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
+            {/* Top Navigation Bar - Compact on Mobile */}
+            <header className="fixed top-0 right-0 left-0 lg:left-64 z-40 h-14 md:h-16 bg-[var(--background-secondary)]/90 backdrop-blur-lg border-b border-[var(--border-color)]">
+                <div className="h-full px-2 md:px-4 flex items-center justify-between gap-2">
+                    {/* Left: Menu + Logo */}
+                    <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                        {/* Mobile Menu Button */}
+                        <button
+                            id="mobile-menu-toggle"
+                            onClick={toggleMobileMenu}
+                            className="lg:hidden p-1.5 md:p-2 rounded-lg hover:bg-[var(--background-card)] text-[var(--text-secondary)]"
+                        >
+                            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        </button>
 
-                    {/* Mobile Logo */}
-                    <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
-                        <Zap className="w-6 h-6 text-[var(--primary)]" />
-                        <span className="font-bold text-gradient">Zenith AI Academy</span>
-                    </Link>
+                        {/* Mobile Logo - Shorter */}
+                        <Link href="/dashboard" className="lg:hidden flex items-center gap-1.5">
+                            <Zap className="w-5 h-5 text-[var(--primary)]" />
+                            <span className="font-bold text-sm text-gradient">Zenith AI</span>
+                        </Link>
+                    </div>
 
-                    {/* Search Bar - Desktop */}
+                    {/* Search Bar - Desktop Only */}
                     <div className="hidden lg:flex flex-1 max-w-xl">
                         <div className="relative w-full">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                             <input
                                 type="text"
                                 placeholder="Cari pelajaran, materi..."
-                                className="input-field pl-10 py-2.5 text-sm"
+                                className="input-field pl-10 py-2 text-sm"
                             />
                         </div>
                     </div>
 
-                    {/* Right Section */}
-                    <div className="flex items-center gap-2">
-                        {/* Points */}
+                    {/* Right Section - Compact */}
+                    <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                        {/* Points - Compact on mobile */}
                         <PointsDisplay />
 
                         {/* Notifications */}
                         <NotificationDropdown />
 
-                        {/* Profile Dropdown */}
+                        {/* Profile Avatar - Smaller on mobile */}
                         <div className="relative">
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[var(--background-card)] transition"
+                                className="flex items-center p-1 rounded-lg hover:bg-[var(--background-card)] transition"
                             >
                                 {user.image ? (
-                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-[var(--border-color)]">
+                                    <div className="w-7 h-7 md:w-8 md:h-8 rounded-full overflow-hidden border border-[var(--border-color)]">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={user.image}
@@ -102,21 +105,21 @@ export default function TopNav({ user }: TopNavProps) {
                                         />
                                     </div>
                                 ) : (
-                                    <div className="w-8 h-8 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] font-medium">
+                                    <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] font-medium text-xs md:text-sm">
                                         {user.name?.charAt(0).toUpperCase() || 'U'}
                                     </div>
                                 )}
                             </button>
 
                             {isProfileOpen && (
-                                <div className="absolute right-0 mt-2 w-56 glass-card py-2 animate-fade-in">
-                                    <div className="px-4 py-2 border-b border-[var(--border-color)]">
-                                        <p className="font-medium truncate">{user.name}</p>
-                                        <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
+                                <div className="absolute right-0 mt-2 w-48 md:w-56 glass-card py-2 animate-fade-in z-50">
+                                    <div className="px-3 md:px-4 py-2 border-b border-[var(--border-color)]">
+                                        <p className="font-medium text-sm truncate">{user.name}</p>
+                                        <p className="text-[10px] md:text-xs text-[var(--text-muted)] truncate">{user.email}</p>
                                     </div>
                                     <Link
                                         href="/profile"
-                                        className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--background-card)] transition"
+                                        className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--background-card)] transition"
                                         onClick={() => setIsProfileOpen(false)}
                                     >
                                         <User className="w-4 h-4" />
@@ -125,7 +128,7 @@ export default function TopNav({ user }: TopNavProps) {
                                     {isAdmin && (
                                         <Link
                                             href="/admin"
-                                            className="flex items-center gap-2 px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--background-card)] transition"
+                                            className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--background-card)] transition"
                                             onClick={() => setIsProfileOpen(false)}
                                         >
                                             <Settings className="w-4 h-4" />
@@ -134,7 +137,7 @@ export default function TopNav({ user }: TopNavProps) {
                                     )}
                                     <button
                                         onClick={handleSignOut}
-                                        className="w-full flex items-center gap-2 px-4 py-2 text-[var(--error)] hover:bg-[var(--background-card)] transition"
+                                        className="w-full flex items-center gap-2 px-3 md:px-4 py-2 text-sm text-[var(--error)] hover:bg-[var(--background-card)] transition"
                                     >
                                         <LogOut className="w-4 h-4" />
                                         Keluar
@@ -146,17 +149,17 @@ export default function TopNav({ user }: TopNavProps) {
                 </div>
             </header>
 
-            {/* Mobile Menu */}
+            {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
-                <div className="lg:hidden fixed inset-0 z-30 bg-[var(--background)]/95 backdrop-blur-lg pt-16">
-                    <nav className="p-4 space-y-2">
+                <div className="lg:hidden fixed inset-0 z-30 bg-[var(--background)]/95 backdrop-blur-lg pt-14">
+                    <nav className="p-3 space-y-1">
                         {mobileNavItems.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 id={item.id}
                                 onClick={closeMobileMenu}
-                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)] transition"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)] transition"
                             >
                                 <item.icon className="w-5 h-5 shrink-0" />
                                 {item.label}
@@ -167,7 +170,7 @@ export default function TopNav({ user }: TopNavProps) {
                                 href="/admin"
                                 id="mobile-nav-admin"
                                 onClick={closeMobileMenu}
-                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)] transition"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--background-card)] hover:text-[var(--text-primary)] transition"
                             >
                                 <Settings className="w-5 h-5 shrink-0" />
                                 Panel Admin

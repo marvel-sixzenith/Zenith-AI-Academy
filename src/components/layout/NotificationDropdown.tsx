@@ -87,17 +87,17 @@ export default function NotificationDropdown() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={handleToggle}
-                className="p-2 rounded-lg hover:bg-[var(--background-card)] text-[var(--text-secondary)] relative transition-colors"
+                className="p-1.5 md:p-2 rounded-lg hover:bg-[var(--background-card)] text-[var(--text-secondary)] relative transition-colors"
                 aria-label="Notifications"
             >
-                <Bell className={clsx("w-5 h-5", isOpen && "text-[var(--primary)]")} />
+                <Bell className={clsx("w-4 h-4 md:w-5 md:h-5", isOpen && "text-[var(--primary)]")} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse" />
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[var(--primary)] animate-pulse" />
                 )}
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 glass-card bg-[#0B1221] animate-fade-in shadow-xl z-50 border border-[var(--border-color)] overflow-hidden rounded-xl">
+                <div className="absolute right-0 mt-2 w-72 md:w-80 glass-card bg-[#0B1221] animate-fade-in shadow-xl z-50 border border-[var(--border-color)] overflow-hidden rounded-xl">
                     <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--background-secondary)]/50">
                         <h3 className="font-semibold text-sm">Notifications</h3>
                         {unreadCount > 0 && (
